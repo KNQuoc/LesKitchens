@@ -1,257 +1,473 @@
 import Firebase
+import FirebaseAppCheck
 import FirebaseAuth
 import FirebaseFirestore
 import Foundation
 import SwiftUI
 
 // Models
-struct GroceryItem: Identifiable, Codable {
-    var id = UUID()
+struct ShoppingItem: Identifiable, Codable {
+    var id: String
     var name: String
     var quantity: Int
-    var isCompleted: Bool = false
+    var groupItem: Bool
+
+    init(id: String = UUID().uuidString, name: String, quantity: Int, groupItem: Bool = false) {
+        self.id = id
+        self.name = name
+        self.quantity = quantity
+        self.groupItem = groupItem
+    }
 }
 
 struct InventoryItem: Identifiable, Codable {
-    var id = UUID()
+    var id: String
     var name: String
     var quantity: Int
-    var dateAdded: Date = Date()
+    var expirationDate: Date?
+    var inventoryId: String?  // null for personal inventory, otherwise matches groupInventory ID
+    var status: String
+
+    init(
+        id: String = UUID().uuidString, name: String, quantity: Int, expirationDate: Date? = nil,
+        inventoryId: String? = nil, status: String = "active"
+    ) {
+        self.id = id
+        self.name = name
+        self.quantity = quantity
+        self.expirationDate = expirationDate
+        self.inventoryId = inventoryId
+        self.status = status
+    }
 }
 
-struct GroupItem: Identifiable, Codable {
-    var id = UUID()
+struct GroupInventory: Identifiable, Codable {
+    var id: String
+    var groupId: String
     var name: String
-    var assignedTo: String
-    var isCompleted: Bool = false
+    var groupName: String
+
+    init(id: String = UUID().uuidString, groupId: String, name: String, groupName: String) {
+        self.id = id
+        self.groupId = groupId
+        self.name = name
+        self.groupName = groupName
+    }
+}
+
+struct Group: Identifiable, Codable {
+    var id: String
+    var name: String
+    var memberCount: Int
+    var owner: Bool
+
+    init(id: String = UUID().uuidString, name: String, memberCount: Int = 1, owner: Bool = false) {
+        self.id = id
+        self.name = name
+        self.memberCount = memberCount
+        self.owner = owner
+    }
+}
+
+struct UserProfile: Codable {
+    var userId: String
+    var displayName: String
+    var username: String
+    var email: String
+    var createdAt: Date
+
+    init(
+        userId: String, displayName: String, username: String, email: String,
+        createdAt: Date = Date()
+    ) {
+        self.userId = userId
+        self.displayName = displayName
+        self.username = username
+        self.email = email
+        self.createdAt = createdAt
+    }
 }
 
 // ViewModel
 class KitchenViewModel: ObservableObject {
-    @Published var groceryItems: [GroceryItem] = []
+    @Published var shoppingItems: [ShoppingItem] = []
     @Published var inventoryItems: [InventoryItem] = []
-    @Published var groupItems: [GroupItem] = []
+    @Published var groupInventories: [GroupInventory] = []
+    @Published var groups: [Group] = []
+    @Published var userProfile: UserProfile?
     @Published var selectedTab = 0
+    @Published var isLoading = false
+    @Published var errorMessage: String?
 
     private var db = Firestore.firestore()
 
     init() {
         // Check if user is logged in before loading data
         if let currentUser = Auth.auth().currentUser {
-            loadFirebaseData()
-        } else {
-            loadLocalData()  // Fallback to local data if not logged in
+            loadUserData(userId: currentUser.uid)
+        }
+        // Disable analytics in debug builds
+        Analytics.setAnalyticsCollectionEnabled(false)
+
+        // BEFORE FirebaseApp.configure()
+        let providerFactory = AppCheckDebugProviderFactory()
+        AppCheck.setAppCheckProviderFactory(providerFactory)
+
+    }
+
+    // MARK: - Data Loading
+
+    func loadUserData(userId: String) {
+        isLoading = true
+        errorMessage = nil
+
+        let dispatchGroup = DispatchGroup()
+
+        // Load profile
+        dispatchGroup.enter()
+        loadProfile(userId: userId) { _ in
+            dispatchGroup.leave()
+        }
+
+        // Load shopping items
+        dispatchGroup.enter()
+        loadShoppingItems(userId: userId) { _ in
+            dispatchGroup.leave()
+        }
+
+        // Load inventory items
+        dispatchGroup.enter()
+        loadInventoryItems(userId: userId) { _ in
+            dispatchGroup.leave()
+        }
+
+        // Load groups
+        dispatchGroup.enter()
+        loadGroups(userId: userId) { _ in
+            dispatchGroup.leave()
+        }
+
+        // Load group inventories
+        dispatchGroup.enter()
+        loadGroupInventories(userId: userId) { _ in
+            dispatchGroup.leave()
+        }
+
+        dispatchGroup.notify(queue: .main) {
+            self.isLoading = false
         }
     }
 
-    // MARK: - Grocery List Methods
-    func addGroceryItem(name: String, quantity: Int) {
-        let newItem = GroceryItem(name: name, quantity: quantity)
-        groceryItems.append(newItem)
-        saveItems()
+    // MARK: - Profile Methods
+
+    func loadProfile(userId: String, completion: @escaping (Bool) -> Void) {
+        db.collection("users").document(userId).collection("profile").document("userProfile")
+            .getDocument {
+                [weak self] (snapshot: DocumentSnapshot?, error: Error?) in
+                guard let self = self else { return }
+
+                if let error = error {
+                    self.errorMessage = "Failed to load profile: \(error.localizedDescription)"
+                    completion(false)
+                    return
+                }
+
+                guard let snapshot = snapshot, snapshot.exists, let data = snapshot.data() else {
+                    self.errorMessage = "Profile data not found"
+                    completion(false)
+                    return
+                }
+
+                // Process the profile data
+                let createdTimestamp = data["createdAt"] as? Timestamp ?? Timestamp(date: Date())
+
+                let profile = UserProfile(
+                    userId: data["userId"] as? String ?? userId,
+                    displayName: data["displayName"] as? String ?? "",
+                    username: data["username"] as? String ?? "",
+                    email: data["email"] as? String ?? "",
+                    createdAt: createdTimestamp.dateValue()
+                )
+
+                DispatchQueue.main.async {
+                    self.userProfile = profile
+                    completion(true)
+                }
+            }
     }
 
-    func deleteGroceryItem(at indexSet: IndexSet) {
-        groceryItems.remove(atOffsets: indexSet)
-        saveItems()
+    // MARK: - Shopping Items Methods
+
+    func loadShoppingItems(userId: String, completion: @escaping (Bool) -> Void) {
+        db.collection("users").document(userId).collection("shopping").getDocuments {
+            [weak self] snapshot, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                self.errorMessage = "Failed to load shopping items: \(error.localizedDescription)"
+                completion(false)
+                return
+            }
+
+            guard let documents = snapshot?.documents else {
+                completion(true)
+                return
+            }
+
+            let items = documents.compactMap { document -> ShoppingItem? in
+                let data = document.data()
+
+                return ShoppingItem(
+                    id: document.documentID,
+                    name: data["name"] as? String ?? "",
+                    quantity: data["quantity"] as? Int ?? 1,
+                    groupItem: data["groupItem"] as? Bool ?? false
+                )
+            }
+
+            DispatchQueue.main.async {
+                self.shoppingItems = items
+                completion(true)
+            }
+        }
     }
 
-    func toggleGroceryCompletion(for item: GroceryItem) {
-        if let index = groceryItems.firstIndex(where: { $0.id == item.id }) {
-            groceryItems[index].isCompleted.toggle()
-            saveItems()
+    func addShoppingItem(name: String, quantity: Int, groupItem: Bool = false) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        let newItem = ShoppingItem(name: name, quantity: quantity, groupItem: groupItem)
+
+        // Include all fields with default values for empty/null fields
+        let data: [String: Any] = [
+            "id": newItem.id,
+            "name": newItem.name,
+            "quantity": newItem.quantity,
+            "groupItem": newItem.groupItem,
+        ]
+
+        db.collection("users").document(userId).collection("shopping").document(newItem.id).setData(
+            data
+        ) { [weak self] error in
+            if let error = error {
+                self?.errorMessage = "Failed to add shopping item: \(error.localizedDescription)"
+                return
+            }
+
+            DispatchQueue.main.async {
+                self?.shoppingItems.append(newItem)
+            }
+        }
+    }
+
+    func deleteShoppingItem(id: String) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(userId).collection("shopping").document(id).delete {
+            [weak self] error in
+            if let error = error {
+                self?.errorMessage = "Failed to delete shopping item: \(error.localizedDescription)"
+                return
+            }
+
+            DispatchQueue.main.async {
+                self?.shoppingItems.removeAll { $0.id == id }
+            }
         }
     }
 
     // MARK: - Inventory Methods
-    func addInventoryItem(name: String, quantity: Int) {
-        let newItem = InventoryItem(name: name, quantity: quantity)
-        inventoryItems.append(newItem)
-        saveItems()
-    }
 
-    func deleteInventoryItem(at indexSet: IndexSet) {
-        inventoryItems.remove(atOffsets: indexSet)
-        saveItems()
-    }
+    func loadInventoryItems(userId: String, completion: @escaping (Bool) -> Void) {
+        db.collection("users").document(userId).collection("inventory").getDocuments {
+            [weak self] snapshot, error in
+            guard let self = self else { return }
 
-    func moveToInventory(item: GroceryItem) {
-        // Add to inventory
-        let inventoryItem = InventoryItem(name: item.name, quantity: item.quantity)
-        inventoryItems.append(inventoryItem)
-
-        // Remove from grocery list
-        if let index = groceryItems.firstIndex(where: { $0.id == item.id }) {
-            groceryItems.remove(at: index)
-        }
-
-        saveItems()
-    }
-
-    // MARK: - Group List Methods
-    func addGroupItem(name: String, assignedTo: String) {
-        let newItem = GroupItem(name: name, assignedTo: assignedTo)
-        groupItems.append(newItem)
-        saveItems()
-    }
-
-    func deleteGroupItem(at indexSet: IndexSet) {
-        groupItems.remove(atOffsets: indexSet)
-        saveItems()
-    }
-
-    func toggleGroupCompletion(for item: GroupItem) {
-        if let index = groupItems.firstIndex(where: { $0.id == item.id }) {
-            groupItems[index].isCompleted.toggle()
-            saveItems()
-        }
-    }
-
-    // MARK: - Firebase Data Operations
-
-    func saveItems() {
-        if let currentUser = Auth.auth().currentUser {
-            saveToFirebase(userId: currentUser.uid)
-        } else {
-            saveToLocalStorage()
-        }
-    }
-
-    private func saveToFirebase(userId: String) {
-        do {
-            // Save grocery items
-            let groceryData = try JSONEncoder().encode(groceryItems)
-            if let groceryString = String(data: groceryData, encoding: .utf8) {
-                db.collection("users").document(userId).collection("data").document("groceryItems")
-                    .setData(["data": groceryString])
+            if let error = error {
+                self.errorMessage = "Failed to load inventory items: \(error.localizedDescription)"
+                completion(false)
+                return
             }
 
-            // Save inventory items
-            let inventoryData = try JSONEncoder().encode(inventoryItems)
-            if let inventoryString = String(data: inventoryData, encoding: .utf8) {
-                db.collection("users").document(userId).collection("data").document(
-                    "inventoryItems"
+            guard let documents = snapshot?.documents else {
+                completion(true)
+                return
+            }
+
+            let items = documents.compactMap { document -> InventoryItem? in
+                let data = document.data()
+                var expirationDate: Date? = nil
+
+                if let expirationTimestamp = data["expirationDate"] as? Timestamp {
+                    expirationDate = expirationTimestamp.dateValue()
+                }
+
+                return InventoryItem(
+                    id: document.documentID,
+                    name: data["name"] as? String ?? "",
+                    quantity: data["quantity"] as? Int ?? 1,
+                    expirationDate: expirationDate,
+                    inventoryId: data["inventoryId"] as? String,
+                    status: data["status"] as? String ?? "active"
                 )
-                .setData(["data": inventoryString])
             }
 
-            // Save group items
-            let groupData = try JSONEncoder().encode(groupItems)
-            if let groupString = String(data: groupData, encoding: .utf8) {
-                db.collection("users").document(userId).collection("data").document("groupItems")
-                    .setData(["data": groupString])
-            }
-        } catch {
-            print("Error saving to Firebase: \(error.localizedDescription)")
-            // Fall back to local storage if Firebase saving fails
-            saveToLocalStorage()
-        }
-    }
-
-    func loadFirebaseData() {
-        guard let userId = Auth.auth().currentUser?.uid else {
-            // Fall back to local storage if not authenticated
-            loadLocalData()
-            return
-        }
-
-        // Reference to user's data collection
-        let userDataRef = db.collection("users").document(userId).collection("data")
-
-        // Load grocery items
-        userDataRef.document("groceryItems").getDocument { [weak self] document, error in
-            if let document = document, document.exists,
-                let dataString = document.data()?["data"] as? String,
-                let data = dataString.data(using: .utf8)
-            {
-
-                do {
-                    let items = try JSONDecoder().decode([GroceryItem].self, from: data)
-                    DispatchQueue.main.async {
-                        self?.groceryItems = items
-                    }
-                } catch {
-                    print("Error decoding grocery items: \(error.localizedDescription)")
-                }
-            }
-        }
-
-        // Load inventory items
-        userDataRef.document("inventoryItems").getDocument { [weak self] document, error in
-            if let document = document, document.exists,
-                let dataString = document.data()?["data"] as? String,
-                let data = dataString.data(using: .utf8)
-            {
-
-                do {
-                    let items = try JSONDecoder().decode([InventoryItem].self, from: data)
-                    DispatchQueue.main.async {
-                        self?.inventoryItems = items
-                    }
-                } catch {
-                    print("Error decoding inventory items: \(error.localizedDescription)")
-                }
-            }
-        }
-
-        // Load group items
-        userDataRef.document("groupItems").getDocument { [weak self] document, error in
-            if let document = document, document.exists,
-                let dataString = document.data()?["data"] as? String,
-                let data = dataString.data(using: .utf8)
-            {
-
-                do {
-                    let items = try JSONDecoder().decode([GroupItem].self, from: data)
-                    DispatchQueue.main.async {
-                        self?.groupItems = items
-                    }
-                } catch {
-                    print("Error decoding group items: \(error.localizedDescription)")
-                }
+            DispatchQueue.main.async {
+                self.inventoryItems = items
+                completion(true)
             }
         }
     }
 
-    // MARK: - Local Storage Operations
+    func addInventoryItem(
+        name: String, quantity: Int, expirationDate: Date? = nil, inventoryId: String? = nil
+    ) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
 
-    private func saveToLocalStorage() {
-        if let groceryEncoded = try? JSONEncoder().encode(groceryItems) {
-            UserDefaults.standard.set(groceryEncoded, forKey: "GroceryItems")
+        let newItem = InventoryItem(
+            name: name,
+            quantity: quantity,
+            expirationDate: expirationDate,
+            inventoryId: inventoryId,
+            status: "NORMAL"
+        )
+
+        // Create data dictionary without the optional fields first
+        var data: [String: Any] = [
+            "id": newItem.id,
+            "name": newItem.name,
+            "quantity": newItem.quantity,
+            "status": newItem.status,
+        ]
+
+        // Handle optional fields properly
+        if let expirationDate = newItem.expirationDate {
+            data["expirationDate"] = Timestamp(date: expirationDate)
+        } else {
+            data["expirationDate"] = ""  // Empty string for missing date
         }
 
-        if let inventoryEncoded = try? JSONEncoder().encode(inventoryItems) {
-            UserDefaults.standard.set(inventoryEncoded, forKey: "InventoryItems")
+        if let inventoryId = newItem.inventoryId {
+            data["inventoryId"] = inventoryId
+        } else {
+            data["inventoryId"] = NSNull()  // Explicit null for missing inventory ID
         }
 
-        if let groupEncoded = try? JSONEncoder().encode(groupItems) {
-            UserDefaults.standard.set(groupEncoded, forKey: "GroupItems")
+        db.collection("users").document(userId).collection("inventory").document(newItem.id)
+            .setData(data) { [weak self] error in
+                if let error = error {
+                    self?.errorMessage =
+                        "Failed to add inventory item: \(error.localizedDescription)"
+                    return
+                }
+
+                DispatchQueue.main.async {
+                    self?.inventoryItems.append(newItem)
+                }
+            }
+    }
+
+    func deleteInventoryItem(id: String) {
+        guard let userId = Auth.auth().currentUser?.uid else { return }
+
+        db.collection("users").document(userId).collection("inventory").document(id).delete {
+            [weak self] error in
+            if let error = error {
+                self?.errorMessage =
+                    "Failed to delete inventory item: \(error.localizedDescription)"
+                return
+            }
+
+            DispatchQueue.main.async {
+                self?.inventoryItems.removeAll { $0.id == id }
+            }
         }
     }
 
-    private func loadLocalData() {
-        // Load Grocery Items
-        if let savedGroceryItems = UserDefaults.standard.data(forKey: "GroceryItems"),
-            let decodedGroceryItems = try? JSONDecoder().decode(
-                [GroceryItem].self, from: savedGroceryItems)
-        {
-            groceryItems = decodedGroceryItems
-        }
+    // MARK: - Groups Methods
 
-        // Load Inventory Items
-        if let savedInventoryItems = UserDefaults.standard.data(forKey: "InventoryItems"),
-            let decodedInventoryItems = try? JSONDecoder().decode(
-                [InventoryItem].self, from: savedInventoryItems)
-        {
-            inventoryItems = decodedInventoryItems
-        }
+    func loadGroups(userId: String, completion: @escaping (Bool) -> Void) {
+        db.collection("users").document(userId).collection("groups").getDocuments {
+            [weak self] snapshot, error in
+            guard let self = self else { return }
 
-        // Load Group Items
-        if let savedGroupItems = UserDefaults.standard.data(forKey: "GroupItems"),
-            let decodedGroupItems = try? JSONDecoder().decode(
-                [GroupItem].self, from: savedGroupItems)
-        {
-            groupItems = decodedGroupItems
+            if let error = error {
+                self.errorMessage = "Failed to load groups: \(error.localizedDescription)"
+                completion(false)
+                return
+            }
+
+            guard let documents = snapshot?.documents else {
+                completion(true)
+                return
+            }
+
+            let items = documents.compactMap { document -> Group? in
+                let data = document.data()
+
+                return Group(
+                    id: document.documentID,
+                    name: data["name"] as? String ?? "",
+                    memberCount: data["memberCount"] as? Int ?? 1,
+                    owner: data["owner"] as? Bool ?? false
+                )
+            }
+
+            DispatchQueue.main.async {
+                self.groups = items
+                completion(true)
+            }
         }
+    }
+
+    // MARK: - Group Inventories Methods
+
+    func loadGroupInventories(userId: String, completion: @escaping (Bool) -> Void) {
+        db.collection("users").document(userId).collection("groupInventories").getDocuments {
+            [weak self] snapshot, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                self.errorMessage =
+                    "Failed to load group inventories: \(error.localizedDescription)"
+                completion(false)
+                return
+            }
+
+            guard let documents = snapshot?.documents else {
+                completion(true)
+                return
+            }
+
+            let items = documents.compactMap { document -> GroupInventory? in
+                let data = document.data()
+
+                return GroupInventory(
+                    id: document.documentID,
+                    groupId: data["groupId"] as? String ?? "",
+                    name: data["name"] as? String ?? "",
+                    groupName: data["groupName"] as? String ?? ""
+                )
+            }
+
+            DispatchQueue.main.async {
+                self.groupInventories = items
+                completion(true)
+            }
+        }
+    }
+
+    // MARK: - Move Item Methods
+
+    func moveToInventory(
+        from shoppingItem: ShoppingItem, expirationDate: Date? = nil, inventoryId: String? = nil
+    ) {
+        addInventoryItem(
+            name: shoppingItem.name,
+            quantity: shoppingItem.quantity,
+            expirationDate: expirationDate,
+            inventoryId: inventoryId
+        )
+
+        deleteShoppingItem(id: shoppingItem.id)
     }
 }
