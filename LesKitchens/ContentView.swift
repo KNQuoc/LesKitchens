@@ -1,146 +1,9 @@
 import SwiftUI
 
-// Models
-struct GroceryItem: Identifiable, Codable {
-    var id = UUID()
-    var name: String
-    var quantity: Int
-    var isCompleted: Bool = false
-}
-
-struct InventoryItem: Identifiable, Codable {
-    var id = UUID()
-    var name: String
-    var quantity: Int
-    var dateAdded: Date = Date()
-}
-
-struct GroupItem: Identifiable, Codable {
-    var id = UUID()
-    var name: String
-    var assignedTo: String
-    var isCompleted: Bool = false
-}
-
-// ViewModel
-class KitchenViewModel: ObservableObject {
-    @Published var groceryItems: [GroceryItem] = []
-    @Published var inventoryItems: [InventoryItem] = []
-    @Published var groupItems: [GroupItem] = []
-    @Published var selectedTab = 0
-
-    init() {
-        loadItems()
-    }
-
-    // Grocery List Methods
-    func addGroceryItem(name: String, quantity: Int) {
-        let newItem = GroceryItem(name: name, quantity: quantity)
-        groceryItems.append(newItem)
-        saveItems()
-    }
-
-    func deleteGroceryItem(at indexSet: IndexSet) {
-        groceryItems.remove(atOffsets: indexSet)
-        saveItems()
-    }
-
-    func toggleGroceryCompletion(for item: GroceryItem) {
-        if let index = groceryItems.firstIndex(where: { $0.id == item.id }) {
-            groceryItems[index].isCompleted.toggle()
-            saveItems()
-        }
-    }
-
-    // Inventory Methods
-    func addInventoryItem(name: String, quantity: Int) {
-        let newItem = InventoryItem(name: name, quantity: quantity)
-        inventoryItems.append(newItem)
-        saveItems()
-    }
-
-    func deleteInventoryItem(at indexSet: IndexSet) {
-        inventoryItems.remove(atOffsets: indexSet)
-        saveItems()
-    }
-
-    func moveToInventory(item: GroceryItem) {
-        // Add to inventory
-        let inventoryItem = InventoryItem(name: item.name, quantity: item.quantity)
-        inventoryItems.append(inventoryItem)
-
-        // Remove from grocery list
-        if let index = groceryItems.firstIndex(where: { $0.id == item.id }) {
-            groceryItems.remove(at: index)
-        }
-
-        saveItems()
-    }
-
-    // Group List Methods
-    func addGroupItem(name: String, assignedTo: String) {
-        let newItem = GroupItem(name: name, assignedTo: assignedTo)
-        groupItems.append(newItem)
-        saveItems()
-    }
-
-    func deleteGroupItem(at indexSet: IndexSet) {
-        groupItems.remove(atOffsets: indexSet)
-        saveItems()
-    }
-
-    func toggleGroupCompletion(for item: GroupItem) {
-        if let index = groupItems.firstIndex(where: { $0.id == item.id }) {
-            groupItems[index].isCompleted.toggle()
-            saveItems()
-        }
-    }
-
-    // Data Persistence
-    private func saveItems() {
-        if let groceryEncoded = try? JSONEncoder().encode(groceryItems) {
-            UserDefaults.standard.set(groceryEncoded, forKey: "GroceryItems")
-        }
-
-        if let inventoryEncoded = try? JSONEncoder().encode(inventoryItems) {
-            UserDefaults.standard.set(inventoryEncoded, forKey: "InventoryItems")
-        }
-
-        if let groupEncoded = try? JSONEncoder().encode(groupItems) {
-            UserDefaults.standard.set(groupEncoded, forKey: "GroupItems")
-        }
-    }
-
-    private func loadItems() {
-        // Load Grocery Items
-        if let savedGroceryItems = UserDefaults.standard.data(forKey: "GroceryItems"),
-            let decodedGroceryItems = try? JSONDecoder().decode(
-                [GroceryItem].self, from: savedGroceryItems)
-        {
-            groceryItems = decodedGroceryItems
-        }
-
-        // Load Inventory Items
-        if let savedInventoryItems = UserDefaults.standard.data(forKey: "InventoryItems"),
-            let decodedInventoryItems = try? JSONDecoder().decode(
-                [InventoryItem].self, from: savedInventoryItems)
-        {
-            inventoryItems = decodedInventoryItems
-        }
-
-        // Load Group Items
-        if let savedGroupItems = UserDefaults.standard.data(forKey: "GroupItems"),
-            let decodedGroupItems = try? JSONDecoder().decode(
-                [GroupItem].self, from: savedGroupItems)
-        {
-            groupItems = decodedGroupItems
-        }
-    }
-}
-
 // Main View - TabView Container
 struct ContentView: View {
     @StateObject private var viewModel = KitchenViewModel()
+    @EnvironmentObject var authViewModel: AuthViewModel
 
     var body: some View {
         TabView(selection: $viewModel.selectedTab) {
@@ -161,6 +24,12 @@ struct ContentView: View {
                     Label("Group", systemImage: "person.2")
                 }
                 .tag(2)
+
+            ProfileView()
+                .tabItem {
+                    Label("Profile", systemImage: "person.circle")
+                }
+                .tag(3)
         }
     }
 }
