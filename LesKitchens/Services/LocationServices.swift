@@ -1,0 +1,885 @@
+import CoreLocation
+import Foundation
+import GooglePlaces
+import GooglePlacesSwift
+import SwiftUI
+import UserNotifications
+
+// This file serves as a connector for all location-related services
+
+// MARK: - Models
+/// Data model for grocery store locations
+public struct LocationServicesStore: Identifiable, Hashable, Codable {
+    public var id: String
+    public var name: String
+    public var latitude: Double
+    public var longitude: Double
+    public var type: String
+
+    public init(id: String, name: String, latitude: Double, longitude: Double, type: String) {
+        self.id = id
+        self.name = name
+        self.latitude = latitude
+        self.longitude = longitude
+        self.type = type
+    }
+
+    public var coordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
+    }
+}
+
+// MARK: - Mock Data
+// Mock data for testing geofences
+extension LocationServicesStore {
+    public static var mockGroceryStores: [LocationServicesStore] {
+        return [
+            LocationServicesStore(
+                id: "store1",
+                name: "Whole Foods Market",
+                latitude: 37.7749,  // Example latitude
+                longitude: -122.4194,  // Example longitude
+                type: "supermarket"
+            ),
+            LocationServicesStore(
+                id: "store2",
+                name: "Trader Joe's",
+                latitude: 37.7749 - 0.001,  // Small offset
+                longitude: -122.4194 - 0.001,
+                type: "grocery_store"
+            ),
+            LocationServicesStore(
+                id: "store3",
+                name: "Safeway",
+                latitude: 37.7749,
+                longitude: -122.4194 + 0.002,
+                type: "supermarket"
+            ),
+        ]
+    }
+}
+
+// MARK: - Location Services Manager
+/// Single entry point for all location-based services
+public class LocationServicesManager {
+    // Singleton instance
+    public static let shared = LocationServicesManager()
+
+    // Location managers
+    private let locationManager: LocationManager
+    private let geofencingManager: GeofencingManager
+
+    // Service state
+    private var isRunning = false
+
+    // Initialization
+    private init() {
+        self.locationManager = LocationManager()
+        self.geofencingManager = GeofencingManager()
+    }
+
+    // MARK: - Public API
+
+    /// Bootstrap method for initializing location services from app startup
+    /// Handles delayed start and adds verbose logging
+    public static func bootstrap() {
+        print("🔍 DEBUG: LocationServicesManager - Bootstrapping location services...")
+
+        // Add debug to verify the class is accessible
+        print(
+            "🔍 DEBUG: LocationServicesManager class exists: \(NSStringFromClass(LocationServicesManager.self))"
+        )
+        print("🔍 DEBUG: Shared instance initialized")
+
+        // Log permission status before starting
+        let status: CLAuthorizationStatus
+        if #available(iOS 14.0, *) {
+            let manager = CLLocationManager()
+            status = manager.authorizationStatus
+        } else {
+            status = CLLocationManager.authorizationStatus()
+        }
+        print(
+            "🔍 DEBUG: LocationServicesManager - Permission status before start: \(status.rawValue)")
+
+        // Ensure we're on the main thread for UI operations
+        DispatchQueue.main.async {
+            // Start services immediately first
+            print("🔍 DEBUG: LocationServicesManager - Immediate startup attempt")
+            shared.startServices(isRetry: false)
+
+            // Then start again with a delay to ensure app is fully initialized
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                print("🔍 DEBUG: LocationServicesManager - Delayed startup attempt")
+                shared.startServices(isRetry: true)
+
+                // Log permission status using the non-deprecated API in iOS 14+
+                let status: CLAuthorizationStatus
+                if #available(iOS 14.0, *) {
+                    let manager = CLLocationManager()
+                    status = manager.authorizationStatus
+                } else {
+                    status = CLLocationManager.authorizationStatus()
+                }
+
+                print(
+                    "🔍 DEBUG: LocationServicesManager - Current permission status: \(status.rawValue)"
+                )
+
+                // Set up a timer for periodic status logging
+                Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { _ in
+                    if shared.isEnabled {
+                        print("✅ LocationServicesManager: Services are running")
+                    } else {
+                        print("⚠️ LocationServicesManager: Services are NOT running")
+                    }
+                }
+            }
+        }
+    }
+
+    /// Start all location services
+    public func startServices(isRetry: Bool = false) {
+        if isRunning {
+            print("📌 LocationServicesManager: Services already running - no action needed")
+            return
+        }
+
+        print("🔍 DEBUG: LocationServicesManager - Starting location services")
+
+        // Request permissions first
+        requestPermissions()
+
+        // Add small delay to allow OS to process permission request
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+            guard let self = self else {
+                print("⚠️ LocationServicesManager instance was deallocated")
+                return
+            }
+
+            // Check authorization status using the non-deprecated API in iOS 14+
+            #if os(iOS)
+                let authStatus: CLAuthorizationStatus
+                if #available(iOS 14.0, *) {
+                    let clLocationManager = self.locationManager.clLocationManager
+                    authStatus = clLocationManager.authorizationStatus
+                } else {
+                    // Fallback for older iOS versions
+                    authStatus = CLLocationManager.authorizationStatus()
+                }
+
+                print(
+                    "🔍 DEBUG: LocationServicesManager - Authorization status: \(authStatus.rawValue)"
+                )
+
+                // Start on any level of authorization for simulator testing
+                if authStatus == .authorizedAlways || authStatus == .authorizedWhenInUse
+                    || (isRetry
+                        && ProcessInfo.processInfo.environment["SIMULATOR_DEVICE_NAME"] != nil)
+                {
+                    // We have permission or we're on simulator, start services
+                    print(
+                        "🔍 DEBUG: LocationServicesManager - Have permission or on simulator, starting services"
+                    )
+
+                    // Start location tracking
+                    self.locationManager.startLocationUpdates()
+
+                    // Setup geofencing
+                    self.geofencingManager.setupGroceryGeofences()
+
+                    // Register for app lifecycle notifications
+                    self.registerForAppStateNotifications()
+
+                    self.isRunning = true
+
+                    // Store the status in user defaults so UI can reflect it
+                    UserDefaults.standard.set(true, forKey: "grocery_notifications_enabled")
+
+                    print("✅ LocationServicesManager: Services started successfully")
+                } else {
+                    print(
+                        "⚠️ LocationServicesManager: Cannot start services - missing proper authorization"
+                    )
+
+                    // If this is a retry, we won't try again automatically
+                    if !isRetry {
+                        print(
+                            "🔍 DEBUG: LocationServicesManager - Will retry after permissions dialog"
+                        )
+                    }
+                }
+            #else
+                print("⚠️ LocationServicesManager: Location services not supported on this platform")
+            #endif
+        }
+    }
+
+    /// Stop all location services
+    public func stopServices() {
+        guard isRunning else {
+            print("Location services not running")
+            return
+        }
+
+        print("Stopping location services")
+
+        // Stop location tracking
+        locationManager.stopLocationUpdates()
+
+        // Remove geofences
+        geofencingManager.removeAllGeofences()
+
+        // Unregister notifications
+        #if os(iOS)
+            unregisterFromAppStateNotifications()
+        #endif
+
+        isRunning = false
+    }
+
+    /// Check if services are enabled
+    public var isEnabled: Bool {
+        return isRunning
+    }
+
+    // MARK: - Private methods
+
+    private func requestPermissions() {
+        // Request location permissions
+        locationManager.requestLocationPermissions()
+
+        // Request notification permissions
+        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) {
+            granted, error in
+            if granted {
+                print("Notification permission granted")
+            } else if let error = error {
+                print("Notification permission error: \(error.localizedDescription)")
+            }
+        }
+    }
+
+    #if os(iOS)
+        // Register for app lifecycle notifications
+        private func registerForAppStateNotifications() {
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleAppDidEnterBackground),
+                name: UIApplication.didEnterBackgroundNotification,
+                object: nil
+            )
+
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleAppWillEnterForeground),
+                name: UIApplication.willEnterForegroundNotification,
+                object: nil
+            )
+
+            NotificationCenter.default.addObserver(
+                self,
+                selector: #selector(handleAppWillTerminate),
+                name: UIApplication.willTerminateNotification,
+                object: nil
+            )
+        }
+
+        // Unregister from notifications
+        private func unregisterFromAppStateNotifications() {
+            NotificationCenter.default.removeObserver(
+                self,
+                name: UIApplication.didEnterBackgroundNotification,
+                object: nil
+            )
+
+            NotificationCenter.default.removeObserver(
+                self,
+                name: UIApplication.willEnterForegroundNotification,
+                object: nil
+            )
+
+            NotificationCenter.default.removeObserver(
+                self,
+                name: UIApplication.willTerminateNotification,
+                object: nil
+            )
+        }
+
+        // Handle app lifecycle events
+        @objc private func handleAppDidEnterBackground() {
+            print("App entered background - ensuring location updates continue")
+        }
+
+        @objc private func handleAppWillEnterForeground() {
+            print("App entered foreground")
+            if isRunning {
+                // Restart location updates if necessary
+                locationManager.startLocationUpdates()
+            }
+        }
+
+        @objc private func handleAppWillTerminate() {
+            print("App will terminate")
+        }
+    #endif
+}
+
+// MARK: - Location Manager
+/// Handles standard location updates and proximity checks
+private class LocationManager: NSObject, CLLocationManagerDelegate {
+    // Location manager - expose publicly within the file for access
+    let clLocationManager = CLLocationManager()
+
+    // Properties for location tracking
+    private var currentLocation: CLLocation?
+
+    // Nearby grocery stores
+    private var groceryStoreLocations: [LocationServicesStore] = []
+
+    // Constants
+    private let searchRadius: Double = 5000  // 5 km (approximately 3 miles)
+    private let proximityRadius: Double = 100  // 100 meters for proximity check
+
+    // Track last notification time to avoid spamming
+    private var lastProximityNotificationTime: Date = Date.distantPast
+    private var lastNearbySearchTime: Date = Date.distantPast
+
+    override init() {
+        super.init()
+
+        // Configure location manager
+        clLocationManager.delegate = self
+        clLocationManager.desiredAccuracy = kCLLocationAccuracyBest
+        clLocationManager.distanceFilter = 50  // Update location only when moved by 50 meters
+        clLocationManager.allowsBackgroundLocationUpdates = true
+        clLocationManager.pausesLocationUpdatesAutomatically = false
+
+        #if os(iOS)
+            clLocationManager.showsBackgroundLocationIndicator = true
+        #endif
+    }
+
+    func requestLocationPermissions() {
+        clLocationManager.requestAlwaysAuthorization()
+    }
+
+    func startLocationUpdates() {
+        print("Starting location updates...")
+        clLocationManager.startUpdatingLocation()
+    }
+
+    func stopLocationUpdates() {
+        print("Stopping location updates...")
+        clLocationManager.stopUpdatingLocation()
+    }
+
+    // MARK: - Location updates
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+
+        print("Location update: \(location.coordinate.latitude), \(location.coordinate.longitude)")
+        currentLocation = location
+
+        // Check proximity to grocery stores
+        checkProximityToGroceryStores(userLocation: location)
+
+        // Search for nearby stores if needed
+        searchNearbyStores(at: location)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Location manager error: \(error.localizedDescription)")
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedAlways:
+            print("Location authorization: Always")
+            startLocationUpdates()
+        case .authorizedWhenInUse:
+            print("Location authorization: When In Use")
+            startLocationUpdates()
+        case .denied, .restricted:
+            print("Location authorization: Denied or Restricted")
+            stopLocationUpdates()
+        case .notDetermined:
+            print("Location authorization: Not Determined")
+        @unknown default:
+            print("Location authorization: Unknown")
+        }
+    }
+
+    // MARK: - Grocery store proximity
+
+    private func checkProximityToGroceryStores(userLocation: CLLocation) {
+        if groceryStoreLocations.isEmpty {
+            print("No grocery stores to check proximity against")
+            return
+        }
+
+        // Limit notifications to once every 10 minutes to avoid spamming
+        let currentTime = Date()
+        if currentTime.timeIntervalSince(lastProximityNotificationTime) < 600 {
+            print("Skipping proximity check - last notification was less than 10 minutes ago")
+            return
+        }
+
+        print("Checking proximity to \(groceryStoreLocations.count) grocery stores")
+
+        for store in groceryStoreLocations {
+            let storeLocation = CLLocation(latitude: store.latitude, longitude: store.longitude)
+            let distance = userLocation.distance(from: storeLocation)
+
+            print("Distance to \(store.name): \(distance)m")
+
+            if distance <= proximityRadius {
+                print("🛒 User is within \(proximityRadius)m of \(store.name)!")
+                sendProximityNotification(for: store)
+                lastProximityNotificationTime = currentTime
+                break  // Only send one notification even if multiple stores are nearby
+            }
+        }
+    }
+
+    private func sendProximityNotification(for store: LocationServicesStore) {
+        let content = UNMutableNotificationContent()
+        content.title = "You're near \(store.name)!"
+        content.body = "Time to check your shopping list"
+        content.sound = UNNotificationSound.default
+
+        // Create trigger (immediate)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Create request
+        let request = UNNotificationRequest(
+            identifier: "grocery-proximity-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+
+        // Schedule notification
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error sending notification: \(error.localizedDescription)")
+            } else {
+                print("✅ Proximity notification sent for \(store.name)")
+            }
+        }
+    }
+
+    private func searchNearbyStores(at location: CLLocation) {
+        // Check if enough time has passed since last search
+        let currentTime = Date()
+        if currentTime.timeIntervalSince(lastNearbySearchTime) < 3600 {  // 1 hour
+            print("Skipping nearby search - last search was less than 1 hour ago")
+            return
+        }
+
+        print(
+            "Searching for grocery stores near \(location.coordinate.latitude), \(location.coordinate.longitude)"
+        )
+
+        // Create a new nearby search request using Google Places SDK
+        let placeClient = GMSPlacesClient.shared()
+
+        // Define the search area as a circle around the user's location
+        let circularLocationRestriction = GMSPlaceCircularLocationOption(
+            location.coordinate, searchRadius)
+
+        // Specify the fields to return in the GMSPlace object
+        let placeProperties = [GMSPlaceProperty.name, GMSPlaceProperty.coordinate].map {
+            $0.rawValue
+        }
+
+        // Create the GMSPlaceSearchNearbyRequest
+        let request = GMSPlaceSearchNearbyRequest(
+            locationRestriction: circularLocationRestriction, placeProperties: placeProperties)
+        let includedTypes = ["grocery", "supermarket", "food_store"]
+        request.includedTypes = includedTypes
+
+        let callback: GMSPlaceSearchNearbyResultCallback = { [weak self] results, error in
+            guard let self = self, error == nil else {
+                if let error = error {
+                    print("⚠️ Error searching for grocery stores: \(error.localizedDescription)")
+                    // Fallback to mock data if Google Places fails
+                    let storesNearby = LocationServicesStore.mockGroceryStores
+                    print(
+                        "⚠️ Falling back to \(storesNearby.count) mock grocery stores due to API error"
+                    )
+                    self?.groceryStoreLocations = storesNearby
+                    self?.lastNearbySearchTime = currentTime
+                }
+                return
+            }
+
+            guard let results = results else {
+                print("⚠️ No results returned, falling back to mock data")
+                self.groceryStoreLocations = LocationServicesStore.mockGroceryStores
+                self.lastNearbySearchTime = currentTime
+                return
+            }
+
+            print("✅ Found \(results.count) grocery stores")
+
+            if !results.isEmpty {
+                var stores: [LocationServicesStore] = []
+
+                for place in results {
+                    let store = LocationServicesStore(
+                        id: place.placeID ?? UUID().uuidString,
+                        name: place.name ?? "Unknown Store",
+                        latitude: place.coordinate.latitude,
+                        longitude: place.coordinate.longitude,
+                        type: "grocery_store"
+                    )
+                    stores.append(store)
+                }
+
+                print("✅ Successfully processed \(stores.count) grocery stores")
+                self.groceryStoreLocations = stores
+                self.lastNearbySearchTime = currentTime
+            } else {
+                print("⚠️ No grocery stores found in this area, falling back to mock data")
+                // Fallback to mock data if no stores found
+                self.groceryStoreLocations = LocationServicesStore.mockGroceryStores
+                self.lastNearbySearchTime = currentTime
+            }
+        }
+
+        placeClient.searchNearby(with: request, callback: callback)
+    }
+}
+
+// MARK: - Geofencing Manager
+/// Handles geofence creation and monitoring
+private class GeofencingManager: NSObject, CLLocationManagerDelegate {
+    // Location manager dedicated to geofencing
+    private let clLocationManager = CLLocationManager()
+
+    // Constants
+    private let proximityRadius: Double = 100.0  // 100 meters
+
+    // Store monitored geofences
+    private var monitoredGeofences: [CLCircularRegion] = []
+
+    // Store grocery store locations
+    private var groceryStoreLocations: [LocationServicesStore] = []
+
+    // Track when we last sent a notification to avoid spamming
+    private var lastGeofenceNotificationTime: Date = Date.distantPast
+
+    override init() {
+        super.init()
+
+        // Configure location manager for geofencing
+        clLocationManager.delegate = self
+        clLocationManager.desiredAccuracy = kCLLocationAccuracyBest
+        clLocationManager.allowsBackgroundLocationUpdates = true
+        clLocationManager.pausesLocationUpdatesAutomatically = false
+
+        #if os(iOS)
+            clLocationManager.showsBackgroundLocationIndicator = true
+        #endif
+    }
+
+    // Changed from private to internal for access from LocationServicesManager
+    func setupGroceryGeofences() {
+        print("🔍 DEBUG: GeofencingManager - Setting up grocery geofences")
+
+        #if os(iOS)
+            let authStatus: CLAuthorizationStatus
+            if #available(iOS 14.0, *) {
+                authStatus = clLocationManager.authorizationStatus
+            } else {
+                authStatus = CLLocationManager.authorizationStatus()
+            }
+
+            if authStatus == .authorizedAlways {
+                print(
+                    "🔍 DEBUG: GeofencingManager - Have proper authorization, setting up geofences")
+
+                // If we have the current location, use it to search for real stores
+                if let location = clLocationManager.location {
+                    searchNearbyStoresForGeofencing(at: location)
+                } else {
+                    // Fallback to mock data if location isn't available
+                    print("⚠️ GeofencingManager - No location available, using mock data")
+                    createGeofencesFromStores(LocationServicesStore.mockGroceryStores)
+                }
+
+                print("✅ GeofencingManager: Grocery geofences setup initiated")
+            } else {
+                print("⚠️ GeofencingManager: Cannot setup geofences - missing proper authorization")
+
+                // Request authorization
+                requestGeofencingAuthorization()
+
+                // Retry after delay
+                retryGeofenceSetup()
+            }
+        #else
+            print("⚠️ GeofencingManager: Geofencing not supported on this platform")
+        #endif
+    }
+
+    private func retryGeofenceSetup() {
+        print("🔍 DEBUG: GeofencingManager - Scheduling retry for geofence setup")
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            self?.setupGroceryGeofences()
+        }
+    }
+
+    func removeAllGeofences() {
+        // Stop monitoring all regions
+        for region in clLocationManager.monitoredRegions {
+            clLocationManager.stopMonitoring(for: region)
+        }
+
+        // Clear our tracking list
+        monitoredGeofences.removeAll()
+
+        print("Removed all geofences")
+    }
+
+    // MARK: - Location updates
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let location = locations.last else { return }
+        print(
+            "Geofencing location update: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+        )
+
+        // Use the current location to search for real grocery stores
+        searchNearbyStoresForGeofencing(at: location)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
+        print("Geofencing location manager error: \(error.localizedDescription)")
+    }
+
+    // MARK: - Geofence monitoring
+
+    func locationManager(_ manager: CLLocationManager, didEnterRegion region: CLRegion) {
+        print("🛒 Entered region: \(region.identifier)")
+        sendGeofenceEntryNotification(for: region)
+    }
+
+    func locationManager(
+        _ manager: CLLocationManager, monitoringDidFailFor region: CLRegion?, withError error: Error
+    ) {
+        if let region = region {
+            print("Failed to monitor region \(region.identifier): \(error.localizedDescription)")
+        } else {
+            print("Failed to monitor an unknown region: \(error.localizedDescription)")
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didStartMonitoringFor region: CLRegion) {
+        print("Started monitoring region: \(region.identifier)")
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        switch manager.authorizationStatus {
+        case .authorizedAlways:
+            print("Geofencing location authorization: Always")
+            setupGroceryGeofences()
+        case .authorizedWhenInUse:
+            print(
+                "Geofencing location authorization: When In Use - need Always for proper geofencing"
+            )
+        case .denied, .restricted:
+            print("Geofencing location authorization: Denied or Restricted")
+        case .notDetermined:
+            print("Geofencing location authorization: Not Determined")
+        @unknown default:
+            print("Geofencing location authorization: Unknown")
+        }
+    }
+
+    // MARK: - Geofence management
+
+    private func createGeofencesFromStores(_ stores: [LocationServicesStore]) {
+        // Remove any existing geofences
+        removeAllGeofences()
+
+        print("Creating geofences for \(stores.count) stores")
+
+        // Create a geofence for each store
+        for store in stores {
+            let identifier = "store_\(store.id)"
+            let center = CLLocationCoordinate2D(
+                latitude: store.latitude, longitude: store.longitude)
+
+            // Create the circular region (geofence)
+            let region = CLCircularRegion(
+                center: center, radius: proximityRadius, identifier: identifier)
+            region.notifyOnEntry = true
+            region.notifyOnExit = false
+
+            // Start monitoring the region
+            clLocationManager.startMonitoring(for: region)
+
+            // Add to our tracking list
+            monitoredGeofences.append(region)
+
+            print(
+                "Added geofence for: \(store.name) at \(store.latitude), \(store.longitude) with radius \(proximityRadius)m"
+            )
+        }
+
+        print("Now monitoring \(monitoredGeofences.count) geofences")
+
+        // Store the grocery locations for later reference
+        self.groceryStoreLocations = stores
+    }
+
+    private func sendGeofenceEntryNotification(for region: CLRegion) {
+        guard let identifier = region.identifier.split(separator: "_").last else {
+            print("Invalid geofence identifier format")
+            return
+        }
+
+        // Find the store that corresponds to this geofence
+        guard let store = groceryStoreLocations.first(where: { $0.id == String(identifier) }) else {
+            // If we can't find the specific store, send a generic notification
+            sendGenericGroceryNotification()
+            return
+        }
+
+        print("Entered geofence for: \(store.name)")
+
+        // Limit notifications to once every 10 minutes
+        let currentTime = Date()
+        if currentTime.timeIntervalSince(lastGeofenceNotificationTime) < 600 {
+            print("Skipping notification - last one was less than 10 minutes ago")
+            return
+        }
+
+        // Create notification content
+        let content = UNMutableNotificationContent()
+        content.title = "You're at \(store.name)!"
+        content.body = "Time to check your shopping list"
+        content.sound = UNNotificationSound.default
+
+        // Create trigger (immediate)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Create request
+        let request = UNNotificationRequest(
+            identifier: "geofence-entry-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+
+        // Schedule notification
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error sending geofence notification: \(error.localizedDescription)")
+            } else {
+                print("✅ Geofence notification sent for \(store.name)")
+                self.lastGeofenceNotificationTime = currentTime
+            }
+        }
+    }
+
+    private func sendGenericGroceryNotification() {
+        // Create notification content
+        let content = UNMutableNotificationContent()
+        content.title = "You're at a grocery store!"
+        content.body = "Time to check your shopping list"
+        content.sound = UNNotificationSound.default
+
+        // Create trigger (immediate)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Create request
+        let request = UNNotificationRequest(
+            identifier: "geofence-generic-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+
+        // Schedule notification
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("Error sending generic geofence notification: \(error.localizedDescription)")
+            } else {
+                print("✅ Generic geofence notification sent")
+                self.lastGeofenceNotificationTime = Date()
+            }
+        }
+    }
+
+    private func requestGeofencingAuthorization() {
+        print("🔍 DEBUG: GeofencingManager - Requesting authorization")
+        clLocationManager.requestAlwaysAuthorization()
+    }
+
+    private func searchNearbyStoresForGeofencing(at location: CLLocation) {
+        print("🔍 DEBUG: GeofencingManager - Searching for real grocery stores near location")
+
+        // Create a new nearby search request
+        let placeClient = GMSPlacesClient.shared()
+
+        // Define the search area as a circle around the user's location with a larger radius for geofencing
+        let circularLocationRestriction = GMSPlaceCircularLocationOption(location.coordinate, 5000)  // 5km radius for geofencing
+
+        // Specify the fields to return in the GMSPlace object
+        let placeProperties = [GMSPlaceProperty.name, GMSPlaceProperty.coordinate].map {
+            $0.rawValue
+        }
+
+        // Create the GMSPlaceSearchNearbyRequest
+        let request = GMSPlaceSearchNearbyRequest(
+            locationRestriction: circularLocationRestriction, placeProperties: placeProperties)
+        let includedTypes = ["grocery", "supermarket", "food_store"]
+        request.includedTypes = includedTypes
+
+        let callback: GMSPlaceSearchNearbyResultCallback = { [weak self] results, error in
+            guard let self = self else { return }
+
+            if let error = error {
+                print(
+                    "⚠️ GeofencingManager - Error searching for grocery stores: \(error.localizedDescription)"
+                )
+                // Fallback to mock data if Places API fails
+                print("⚠️ GeofencingManager - Falling back to mock data")
+                self.createGeofencesFromStores(LocationServicesStore.mockGroceryStores)
+                return
+            }
+
+            guard let results = results else {
+                print("⚠️ GeofencingManager - Unexpected results format, falling back to mock data")
+                self.createGeofencesFromStores(LocationServicesStore.mockGroceryStores)
+                return
+            }
+
+            if !results.isEmpty {
+                print("✅ GeofencingManager - Found \(results.count) grocery stores")
+
+                var stores: [LocationServicesStore] = []
+
+                for place in results {
+                    let store = LocationServicesStore(
+                        id: place.placeID ?? UUID().uuidString,
+                        name: place.name ?? "Unknown Store",
+                        latitude: place.coordinate.latitude,
+                        longitude: place.coordinate.longitude,
+                        type: "grocery_store"
+                    )
+                    stores.append(store)
+                }
+
+                print("✅ GeofencingManager - Successfully processed \(stores.count) grocery stores")
+                self.createGeofencesFromStores(stores)
+            } else {
+                print("⚠️ GeofencingManager - No grocery stores found in this area, using mock data")
+                self.createGeofencesFromStores(LocationServicesStore.mockGroceryStores)
+            }
+        }
+
+        placeClient.searchNearby(with: request, callback: callback)
+    }
+}

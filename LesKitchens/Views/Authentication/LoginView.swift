@@ -7,71 +7,80 @@ struct LoginView: View {
     @State private var showRegistration = false
 
     var body: some View {
-        NavigationView {
-            VStack {
-                // Logo
-                Image(systemName: "basket.fill")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 100, height: 100)
-                    .foregroundColor(.blue)
-                    .padding(.top, 50)
+        NavigationStack {
+            ZStack {
+                // Background
+                Color("BackgroundColor")
+                    .ignoresSafeArea()
 
-                Text("Kitchen Assistant")
-                    .font(.largeTitle)
-                    .fontWeight(.bold)
-                    .padding(.bottom, 50)
+                // Content
+                VStack {
+                    // Logo
+                    Image(systemName: "basket.fill")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 100, height: 100)
+                        .foregroundColor(Color("ActionColor"))
+                        .padding(.top, 50)
 
-                // Login Form
-                VStack(spacing: 20) {
-                    TextField("Email", text: $email)
-                        .keyboardType(.emailAddress)
-                        .autocapitalization(.none)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
+                    Text("Kitchen Assistant")
+                        .font(.largeTitle)
+                        .fontWeight(.bold)
+                        .padding(.bottom, 50)
 
-                    SecureField("Password", text: $password)
-                        .padding()
-                        .background(Color(.systemGray6))
-                        .cornerRadius(8)
-
-                    // Error message
-                    if let error = authViewModel.error {
-                        Text(error)
-                            .foregroundColor(.red)
-                            .font(.footnote)
-                    }
-
-                    // Login button
-                    Button(action: {
-                        authViewModel.login(withEmail: email, password: password)
-                    }) {
-                        Text("Log In")
-                            .fontWeight(.semibold)
-                            .foregroundColor(.white)
-                            .frame(maxWidth: .infinity)
+                    // Login Form
+                    VStack(spacing: 20) {
+                        TextField("Email", text: $email)
+                            .keyboardType(.emailAddress)
+                            .autocapitalization(.none)
                             .padding()
-                            .background(Color.blue)
+                            .background(Color("CardColor"))
                             .cornerRadius(8)
-                    }
-                    .disabled(email.isEmpty || password.isEmpty || authViewModel.isAuthenticating)
-                    .opacity(
-                        email.isEmpty || password.isEmpty || authViewModel.isAuthenticating
-                            ? 0.6 : 1)
 
-                    // Register navigation
-                    Button(action: {
-                        showRegistration = true
-                    }) {
-                        Text("Don't have an account? Sign Up")
-                            .foregroundColor(.blue)
+                        SecureField("Password", text: $password)
+                            .padding()
+                            .background(Color("CardColor"))
+                            .cornerRadius(8)
+
+                        // Error message
+                        if let error = authViewModel.error {
+                            Text(error)
+                                .foregroundColor(.red)
+                                .font(.footnote)
+                        }
+
+                        // Login button
+                        Button(action: {
+                            authViewModel.login(withEmail: email, password: password)
+                        }) {
+                            Text("Log In")
+                                .fontWeight(.semibold)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color("ActionColor"))
+                                .cornerRadius(8)
+                        }
+                        .disabled(
+                            email.isEmpty || password.isEmpty || authViewModel.isAuthenticating
+                        )
+                        .opacity(
+                            email.isEmpty || password.isEmpty || authViewModel.isAuthenticating
+                                ? 0.6 : 1)
+
+                        // Register navigation
+                        Button(action: {
+                            showRegistration = true
+                        }) {
+                            Text("Don't have an account? Sign Up")
+                                .foregroundColor(Color("ActionColor"))
+                        }
+                        .padding(.top)
                     }
-                    .padding(.top)
+                    .padding(.horizontal)
+
+                    Spacer()
                 }
-                .padding(.horizontal)
-
-                Spacer()
             }
             .navigationBarHidden(true)
             .navigationDestination(isPresented: $showRegistration) {

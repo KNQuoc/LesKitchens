@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		F44D15B22DB21B520012C6A5 /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = F44D15B12DB21B520012C6A5 /* GooglePlaces */; };
+		F44D15B42DB21B520012C6A5 /* GooglePlacesSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */; };
 		F4BA95052D9C860A002664B9 /* FirebaseAnalytics in Frameworks */ = {isa = PBXBuildFile; productRef = F4BA95042D9C860A002664B9 /* FirebaseAnalytics */; };
 		F4BA95072D9C860A002664B9 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */ = {isa = PBXBuildFile; productRef = F4BA95062D9C860A002664B9 /* FirebaseAnalyticsWithoutAdIdSupport */; };
 		F4BA95092D9C860A002664B9 /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = F4BA95082D9C860A002664B9 /* FirebaseAppCheck */; };
@@ -77,7 +79,9 @@
 				F4BA951B2D9C860A002664B9 /* FirebaseStorage in Frameworks */,
 				F4BA950F2D9C860A002664B9 /* FirebaseCrashlytics in Frameworks */,
 				F4BA95072D9C860A002664B9 /* FirebaseAnalyticsWithoutAdIdSupport in Frameworks */,
+				F44D15B22DB21B520012C6A5 /* GooglePlaces in Frameworks */,
 				F4BA950B2D9C860A002664B9 /* FirebaseAuth in Frameworks */,
+				F44D15B42DB21B520012C6A5 /* GooglePlacesSwift in Frameworks */,
 				F4BA95112D9C860A002664B9 /* FirebaseFirestore in Frameworks */,
 				F4BA95192D9C860A002664B9 /* FirebaseMessaging in Frameworks */,
 				F4BA95172D9C860A002664B9 /* FirebaseInstallations in Frameworks */,
@@ -154,6 +158,8 @@
 				F4BA95182D9C860A002664B9 /* FirebaseMessaging */,
 				F4BA951A2D9C860A002664B9 /* FirebaseStorage */,
 				F4BA951C2D9C860A002664B9 /* FirebaseStorageCombine-Community */,
+				F44D15B12DB21B520012C6A5 /* GooglePlaces */,
+				F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */,
 			);
 			productName = LesKitchens;
 			productReference = F4BA94A82D9C7795002664B9 /* LesKitchens.app */;
@@ -239,6 +245,7 @@
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
 				F4BA95032D9C860A002664B9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F4BA94A92D9C7795002664B9 /* Products */;
@@ -597,6 +604,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-places-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.4.1;
+			};
+		};
 		F4BA95032D9C860A002664B9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -608,6 +623,16 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		F44D15B12DB21B520012C6A5 /* GooglePlaces */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */;
+			productName = GooglePlaces;
+		};
+		F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */;
+			productName = GooglePlacesSwift;
+		};
 		F4BA95042D9C860A002664B9 /* FirebaseAnalytics */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = F4BA95032D9C860A002664B9 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
