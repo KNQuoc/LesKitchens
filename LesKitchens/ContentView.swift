@@ -71,12 +71,26 @@ struct ContentView: View {
             .onAppear {
                 // Set tab bar appearance
                 let appearance = UITabBarAppearance()
+                appearance.configureWithOpaqueBackground()
                 appearance.backgroundColor = UIColor(Color("TabBarColor"))
+
+                // Configure item appearance for both normal and selected states
+                let itemAppearance = UITabBarItemAppearance()
+                itemAppearance.normal.iconColor = .white
+                itemAppearance.normal.titleTextAttributes = [.foregroundColor: UIColor.white]
+                itemAppearance.selected.iconColor = .white
+                itemAppearance.selected.titleTextAttributes = [.foregroundColor: UIColor.white]
+
+                appearance.stackedLayoutAppearance = itemAppearance
+                appearance.inlineLayoutAppearance = itemAppearance
+                appearance.compactInlineLayoutAppearance = itemAppearance
+
                 UITabBar.appearance().standardAppearance = appearance
                 UITabBar.appearance().scrollEdgeAppearance = appearance
 
                 // Set nav bar appearance
                 let navAppearance = UINavigationBarAppearance()
+                navAppearance.configureWithOpaqueBackground()
                 navAppearance.backgroundColor = UIColor(Color("BackgroundColor"))
                 UINavigationBar.appearance().standardAppearance = navAppearance
                 UINavigationBar.appearance().scrollEdgeAppearance = navAppearance

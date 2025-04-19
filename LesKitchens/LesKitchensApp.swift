@@ -7,6 +7,10 @@
 
 import CoreLocation
 import Firebase
+import GooglePlaces  // Add import for GooglePlaces
+// Explicitly import our Services collection so we can access LocationServicesManager
+// The "LesKitchens." prefix is optional depending on your module structure
+// import LesKitchens.Services
 import SwiftUI
 
 // NOTE: These remaining linter errors require importing modules or changing app structure:
@@ -112,102 +116,154 @@ final class AppSetupHelper {
   func initializeLocationServices() {
     print("🔍 DEBUG: App initializing location services...")
 
-    // Start background location services immediately and after a delay
-    // Try immediate startup first
-    setupLocationServices()
+    // Start permission request process
+    LocationPermissionDelegate.shared.requestLocationPermission()
 
     // Then try again after a delay to ensure app is fully launched
     DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-      print("🔍 DEBUG: Starting location services after delay")
-      self.setupLocationServices()
+      print("🔍 DEBUG: Checking location services after delay")
+      LocationPermissionDelegate.shared.requestLocationPermission()
     }
   }
 
-  private func setupLocationServices() {
-    #if canImport(CoreLocation)
-      print("🔍 DEBUG: CoreLocation is available")
+  // Extracted method to be called from the LocationPermissionDelegate
+  func startLocationManagerIfAvailable() {
+    // Try to start services with LocationServicesManager first (our main implementation)
+    print("🔍 DEBUG: Attempting to start via LocationServicesManager...")
 
-      // Create location manager for permissions
-      let manager = CLLocationManager()
+    // Try the direct bridge approach first - this should work if imports are correct
+    do {
+      print("🔍 DEBUG: Attempting to use LocationServicesBridge")
+      LocationServicesBridge.bootstrap()
+      print("✅ Successfully started location services via bridge")
 
-      // Request permissions - make sure to set a delegate to trigger the permission dialog
-      print("🔍 DEBUG: Requesting location permissions")
-      let delegate = LocationPermissionDelegate()
-      manager.delegate = delegate  // Keep a strong reference via the delegate property
-      manager.requestWhenInUseAuthorization()  // Start with when in use
+      // Force a value update to UserDefaults to enable the UI toggle
+      UserDefaults.standard.set(true, forKey: "grocery_notifications_enabled")
+      return
+    }
 
-      // After a short delay, request always authorization
-      DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-        manager.requestAlwaysAuthorization()
+  }
+
+  // Helper method to try finding the class at runtime
+  private func tryRuntimeClassLookup() -> Bool {
+    // Try to access the LocationServicesManager class directly without namespace
+    if let servicesType = NSClassFromString("LocationServicesManager") as? NSObject.Type {
+      print("🔍 DEBUG: Found LocationServicesManager class without namespace")
+      if tryToInitializeManager(managerClass: servicesType) {
+        return true
       }
+    }
 
-      // Log current status using the non-deprecated API in iOS 14+
-      let authStatus: CLAuthorizationStatus
-      if #available(iOS 14.0, *) {
-        authStatus = manager.authorizationStatus
-      } else {
-        // Fallback for older iOS versions
-        authStatus = CLLocationManager.authorizationStatus()
-      }
-      print("🔍 DEBUG: Current location authorization: \(authStatus.rawValue)")
+    // Try with the module name if the direct approach didn't work
+    guard let namespaceName = Bundle.main.infoDictionary?["CFBundleExecutable"] as? String else {
+      print("⚠️ Could not get bundle name")
+      return false
+    }
 
-      // Try to start services with LocationServicesManager first (our main implementation)
-      print("🔍 DEBUG: Attempting to start via LocationServicesManager...")
+    // Try different namespace variations
+    let classNameOptions = [
+      "\(namespaceName).LocationServicesManager",
+      "Services.LocationServicesManager",
+      "\(namespaceName).Services.LocationServicesManager",
+    ]
 
-      // More direct approach using the LocationServicesManager we created
-      guard let namespaceName = Bundle.main.infoDictionary?["CFBundleExecutable"] as? String else {
-        print("⚠️ Could not get bundle name")
-        return
-      }
-
-      let className = "\(namespaceName).LocationServicesManager"
+    print("🔍 DEBUG: Trying multiple class name formats:")
+    for className in classNameOptions {
       print("🔍 DEBUG: Looking for class: \(className)")
-
       if let managerClass = NSClassFromString(className) as? NSObject.Type {
-        print("🔍 DEBUG: Found LocationServicesManager class")
-
-        // Try the bootstrap method first (preferred)
-        let bootstrapSelector = NSSelectorFromString("bootstrap")
-        if managerClass.responds(to: bootstrapSelector) {
-          print("🔍 DEBUG: Calling bootstrap method")
-          let _ = managerClass.perform(bootstrapSelector)
-          print("✅ Successfully bootstrapped location services")
-
-          // Force a value update to UserDefaults to enable the UI toggle
-          UserDefaults.standard.set(true, forKey: "grocery_notifications_enabled")
-          return
+        print("🔍 DEBUG: Found LocationServicesManager class as: \(className)")
+        if tryToInitializeManager(managerClass: managerClass) {
+          return true
         }
-
-        // If bootstrap isn't available, try via shared instance
-        print("🔍 DEBUG: Bootstrap method not found, trying via shared instance")
-        if let shared = managerClass.value(forKey: "shared") as? NSObject {
-          print("🔍 DEBUG: Found shared instance")
-          let startServicesSelector = NSSelectorFromString("startServices:")
-
-          if shared.responds(to: startServicesSelector) {
-            print("🔍 DEBUG: Calling startServices method")
-            let _ = shared.perform(startServicesSelector, with: NSNumber(value: false))
-            print("✅ Successfully started location services")
-
-            // Force a value update to UserDefaults to enable the UI toggle
-            UserDefaults.standard.set(true, forKey: "grocery_notifications_enabled")
-            return
-          } else {
-            print("⚠️ Shared instance doesn't respond to startServices")
-          }
-        } else {
-          print("⚠️ Couldn't get shared instance")
-        }
-      } else {
-        print("⚠️ LocationServicesManager class not found")
       }
+    }
 
-      // Fallback to basic implementation if the main one didn't work
-      print("🔍 DEBUG: Falling back to basic location services...")
-      LocationServicesReference.shared.setupBasicLocationServices()
-    #else
-      print("⚠️ CoreLocation not available on this platform")
-    #endif
+    // If all class lookup attempts failed, try the direct call approach
+    return tryDirectCall()
+  }
+
+  // Last resort direct call approach
+  private func tryDirectCall() -> Bool {
+    print("🔍 DEBUG: Attempting direct call to LocationServicesManager")
+
+    do {
+      // Create a selector to the bootstrap method
+      let bootstrapSelectorString = "bootstrap"
+      let aSelector = NSSelectorFromString(bootstrapSelectorString)
+
+      // Try different class name variations
+      let classStrings = ["LocationServicesManager", "Services.LocationServicesManager"]
+
+      for classString in classStrings {
+        if let aClass = NSClassFromString(classString) {
+          print("🔍 DEBUG: Found class by name: \(classString)")
+
+          // Try to call the static method
+          if aClass.responds(to: aSelector) {
+            print("🔍 DEBUG: Calling static bootstrap method")
+            // Use performSelector for Objective-C compatibility
+            #if swift(>=5.8)
+              // Swift 5.8 and later syntax
+              let _ = aClass.performSelector(
+                onMainThread: aSelector, with: nil, waitUntilDone: true)
+            #else
+              // Older Swift syntax
+              let _ = aClass.perform(aSelector)
+            #endif
+            print("✅ Successfully called bootstrap method")
+            return true
+          } else {
+            print("⚠️ Class doesn't respond to bootstrap selector")
+          }
+        }
+      }
+    }
+
+    return false
+  }
+
+  // Helper method to try initializing the manager class once found
+  private func tryToInitializeManager(managerClass: NSObject.Type) -> Bool {
+    // Try the bootstrap method first (preferred)
+    let bootstrapSelector = NSSelectorFromString("bootstrap")
+    if managerClass.responds(to: bootstrapSelector) {
+      print("🔍 DEBUG: Calling bootstrap method")
+      let _ = managerClass.perform(bootstrapSelector)
+      print("✅ Successfully bootstrapped location services")
+
+      // Force a value update to UserDefaults to enable the UI toggle
+      UserDefaults.standard.set(true, forKey: "grocery_notifications_enabled")
+      return true
+    }
+
+    // If bootstrap isn't available, try via shared instance
+    print("🔍 DEBUG: Bootstrap method not found, trying via shared instance")
+    if let shared = managerClass.value(forKey: "shared") as? NSObject {
+      print("🔍 DEBUG: Found shared instance")
+      let startServicesSelector = NSSelectorFromString("startServices:")
+
+      if shared.responds(to: startServicesSelector) {
+        print("🔍 DEBUG: Calling startServices method")
+        let _ = shared.perform(startServicesSelector, with: NSNumber(value: false))
+        print("✅ Successfully started location services")
+
+        // Force a value update to UserDefaults to enable the UI toggle
+        UserDefaults.standard.set(true, forKey: "grocery_notifications_enabled")
+        return true
+      } else {
+        print("⚠️ Shared instance doesn't respond to startServices")
+      }
+    } else {
+      print("⚠️ Couldn't get shared instance")
+    }
+
+    return false
+  }
+
+  private func fallbackToBasicServices() {
+    print("⚠️ LocationServicesManager class not found")
+    print("🔍 DEBUG: Falling back to basic location services...")
+    LocationServicesReference.shared.setupBasicLocationServices()
   }
 }
 
@@ -215,20 +271,118 @@ final class AppSetupHelper {
 class LocationPermissionDelegate: NSObject, CLLocationManagerDelegate {
   // Keep a reference to prevent it from being deallocated
   static let shared = LocationPermissionDelegate()
+  private var locationManager: CLLocationManager?
+  private var permissionState: CLAuthorizationStatus = .notDetermined
+
+  override init() {
+    super.init()
+    print("🔍 DEBUG: LocationPermissionDelegate initialized")
+
+    // Initialize the location manager
+    locationManager = CLLocationManager()
+    locationManager?.delegate = self
+
+    // Check current authorization status
+    if #available(iOS 14.0, *) {
+      permissionState = locationManager?.authorizationStatus ?? .notDetermined
+    } else {
+      permissionState = CLLocationManager.authorizationStatus()
+    }
+
+    print("🔍 DEBUG: Initial authorization status: \(permissionState.rawValue)")
+  }
+
+  func requestLocationPermission() {
+    print("🔍 DEBUG: Starting location permission request sequence")
+
+    // Instead of immediately checking system-wide settings which can block the UI,
+    // we'll check authorization status first and only proceed if needed
+
+    // Get current status - this is the recommended way as per Apple's guidelines
+    if #available(iOS 14.0, *) {
+      checkAuthorizationStatus(locationManager?.authorizationStatus ?? .notDetermined)
+    } else {
+      checkAuthorizationStatus(CLLocationManager.authorizationStatus())
+    }
+  }
+
+  private func checkAuthorizationStatus(_ status: CLAuthorizationStatus) {
+    permissionState = status
+    print("🔍 DEBUG: Checking authorization status: \(status.rawValue)")
+
+    // Only check if location services are enabled if we need to request permissions
+    if status == .notDetermined {
+      // Move the potentially UI-blocking call off the main thread
+      DispatchQueue.global(qos: .userInitiated).async { [weak self] in
+        // Check if location services are enabled at the system level
+        if !CLLocationManager.locationServicesEnabled() {
+          print("⚠️ Location services are disabled system-wide")
+          // Can't proceed without system location services enabled
+          return
+        }
+
+        // Switch back to main thread for UI updates
+        DispatchQueue.main.async {
+          // First-time request - trigger the callback via When In Use request
+          print("🔍 DEBUG: Status is not determined, requesting when-in-use permission")
+          self?.locationManager?.requestWhenInUseAuthorization()
+          // We'll handle next steps in the callback
+        }
+      }
+      return
+    }
+
+    // Handle other permission states
+    switch status {
+    case .notDetermined:
+      // Already handled above
+      break
+
+    case .authorizedWhenInUse:
+      // Already have when-in-use, now request always
+      print("🔍 DEBUG: Already have when-in-use, requesting always")
+      locationManager?.requestAlwaysAuthorization()
+      // Also start location services with what we have
+      startLocationServicesIfNeeded()
+
+    case .authorizedAlways:
+      // Already have full permissions
+      print("🔍 DEBUG: Already have always authorization")
+      startLocationServicesIfNeeded()
+
+    case .denied, .restricted:
+      print("⚠️ Location authorization denied or restricted")
+    // Can't proceed with location features
+
+    @unknown default:
+      print("⚠️ Unknown authorization status: \(status.rawValue)")
+    }
+  }
+
+  private func startLocationServicesIfNeeded() {
+    // Don't start services if we don't have any authorization
+    if permissionState == .denied || permissionState == .restricted
+      || permissionState == .notDetermined
+    {
+      print("⚠️ Cannot start location services - missing proper authorization")
+      return
+    }
+
+    // Start services with a slight delay to ensure UI responsiveness
+    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+      AppSetupHelper.shared.startLocationManagerIfAvailable()
+    }
+  }
 
   func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
     // Handle iOS 14+ authorization changes
     if #available(iOS 14.0, *) {
       let status = manager.authorizationStatus
-      print("🔍 DEBUG: LocationPermissionDelegate - Authorization changed to: \(status.rawValue)")
+      print("🔍 DEBUG: Authorization changed to: \(status.rawValue)")
 
-      // If we have permission, try to start the location services manager
-      if status == .authorizedAlways || status == .authorizedWhenInUse {
-        print(
-          "🔍 DEBUG: LocationPermissionDelegate - We have permission, trying to restart services")
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-          AppSetupHelper.shared.initializeLocationServices()
-        }
+      // If our status has changed, handle it
+      if status != permissionState {
+        handleAuthorizationChange(status)
       }
     }
   }
@@ -237,36 +391,119 @@ class LocationPermissionDelegate: NSObject, CLLocationManagerDelegate {
   func locationManager(
     _ manager: CLLocationManager, didChangeAuthorization status: CLAuthorizationStatus
   ) {
-    print("🔍 DEBUG: LocationPermissionDelegate - Authorization changed to: \(status.rawValue)")
+    print("🔍 DEBUG: Authorization changed to: \(status.rawValue)")
 
-    // If we have permission, try to start the location services manager
-    if status == .authorizedAlways || status == .authorizedWhenInUse {
-      print("🔍 DEBUG: LocationPermissionDelegate - We have permission, trying to restart services")
-      DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-        AppSetupHelper.shared.initializeLocationServices()
+    // If our status has changed, handle it
+    if status != permissionState {
+      handleAuthorizationChange(status)
+    }
+  }
+
+  private func handleAuthorizationChange(_ status: CLAuthorizationStatus) {
+    // Update our stored state
+    permissionState = status
+
+    switch status {
+    case .authorizedWhenInUse:
+      print("🔍 DEBUG: Received when-in-use permission, requesting always")
+
+      // Wait a moment before requesting the second permission for better UX
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
+        self?.locationManager?.requestAlwaysAuthorization()
       }
+
+      // Start services with what we have
+      startLocationServicesIfNeeded()
+
+    case .authorizedAlways:
+      print("🔍 DEBUG: Received always permission")
+      startLocationServicesIfNeeded()
+
+    case .denied, .restricted:
+      print("⚠️ Location permission denied or restricted")
+    // Can't proceed with location features
+
+    case .notDetermined:
+      print("🔍 DEBUG: Authorization status is still not determined")
+
+    @unknown default:
+      print("⚠️ Unknown authorization status: \(status.rawValue)")
     }
   }
 }
 
-@main
-struct LesKitchensApp: App {
-  @StateObject var authViewModel = AuthViewModel()
+// Create a direct wrapper for LocationServicesManager using runtime lookup
+class LocationServicesBridge {
+  static func bootstrap() {
+    print("🔍 DEBUG: Trying direct call to LocationServicesManager.bootstrap")
 
-  init() {
-    // Initialize Firebase and location services using the helper class
-    AppSetupHelper.shared.initializeFirebase()
-    AppSetupHelper.shared.initializeLocationServices()
+    // --- Try Direct Call First (Assuming Same Target) ---
+    // If LocationServicesManager is in the same target, this direct call should work.
+    LocationServicesManager.bootstrap()
+    print("✅ Successfully called LocationServicesManager.bootstrap directly")
+    return
+
+    // --- Fallback to Runtime Lookup (If Direct Call Fails) ---
+    /* // Uncomment this block if the direct call above fails at compile/runtime
+    print("🔍 DEBUG: Direct call failed, falling back to runtime lookup via bridge")
+    if let managerClass = findLocationServicesManagerClass(),
+       let bootstrapSelector = NSSelectorFromString("bootstrap"),
+       managerClass.responds(to: bootstrapSelector) {
+    
+      print("✅ Found LocationServicesManager class and bootstrap method via runtime")
+    
+      #if swift(>=5.8)
+      let _ = managerClass.performSelector(onMainThread: bootstrapSelector, with: nil, waitUntilDone: true)
+      #else
+      let _ = managerClass.perform(bootstrapSelector)
+      #endif
+    
+      return
+    }
+    print("⚠️ Failed to find or call LocationServicesManager.bootstrap via runtime bridge")
+    */
   }
 
-  var body: some Scene {
-    WindowGroup {
-      if authViewModel.userSession != nil {
-        ContentView()
-          .environmentObject(authViewModel)
+  @main
+  struct LesKitchensApp: App {
+    @StateObject var authViewModel = AuthViewModel()
+
+    init() {
+      // Initialize Firebase and location services using the helper class
+      AppSetupHelper.shared.initializeFirebase()
+
+      // Initialize Google Places SDK
+      if let apiKey = getGooglePlacesAPIKeyFromPlist() {
+        print("🔍 DEBUG: Initializing Google Places SDK with API Key")
+        GMSPlacesClient.provideAPIKey(apiKey)
       } else {
-        LoginView()
-          .environmentObject(authViewModel)
+        print("⚠️ WARNING: Google Places API Key not found in Info.plist")
+      }
+
+      // Initialize location services
+      AppSetupHelper.shared.initializeLocationServices()
+    }
+
+    // Helper function to retrieve API key from Info.plist
+    private func getGooglePlacesAPIKeyFromPlist() -> String? {
+      guard let path = Bundle.main.path(forResource: "LesKitchens-Info", ofType: "plist"),
+        let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject]
+      else {
+        print("⚠️ LesKitchens-Info.plist not found or could not be parsed")
+        return nil
+      }
+      return dict["GooglePlacesAPIKey"] as? String
+    }
+
+    var body: some Scene {
+      WindowGroup {
+        if authViewModel.userSession != nil {
+          ContentView()
+            .environmentObject(authViewModel)
+        } else {
+          LoginView()
+            .environmentObject(authViewModel)
+        }
       }
     }
   }
