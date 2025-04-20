@@ -456,7 +456,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = /Users/quocngo/Documents/GitHub/LesKitchens/LesKitchens/Base.lproj/Info.plist;
+				INFOPLIST_FILE = LesKitchens/Base.lproj/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Kinette;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
@@ -493,7 +493,7 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_TESTABILITY = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = /Users/quocngo/Documents/GitHub/LesKitchens/LesKitchens/Base.lproj/Info.plist;
+				INFOPLIST_FILE = LesKitchens/Base.lproj/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Kinette;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
