@@ -106,8 +106,6 @@ class KitchenViewModel: ObservableObject {
         if let currentUser = Auth.auth().currentUser {
             loadUserData(userId: currentUser.uid)
         }
-        // Disable analytics in debug builds
-        Analytics.setAnalyticsCollectionEnabled(false)
 
         // BEFORE FirebaseApp.configure()
         let providerFactory = AppCheckDebugProviderFactory()

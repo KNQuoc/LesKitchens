@@ -36,13 +36,22 @@ struct WavyShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
 
+        // Safety check for zero width
+        if rect.width <= 0 {
+            return path
+        }
+
         // Move to the bottom-leading corner
         path.move(to: CGPoint(x: 0, y: rect.height))
 
         // Draw the wave
         for x in stride(from: 0, to: rect.width, by: 1) {
-            let relativeX = x / rect.width
-            let y = sin(relativeX * frequency * .pi * 2 + phase) * amplitude + rect.height / 2
+            let relativeX = x / max(1, rect.width)  // Prevent division by zero
+            let sinValue = sin(relativeX * frequency * .pi * 2 + phase)
+
+            // Ensure y calculation doesn't result in NaN or infinity
+            let y = sinValue.isFinite ? (sinValue * amplitude + rect.height / 2) : rect.height / 2
+
             path.addLine(to: CGPoint(x: x, y: y))
         }
 

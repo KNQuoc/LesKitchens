@@ -496,7 +496,7 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
         // Create the GMSPlaceSearchNearbyRequest
         let request = GMSPlaceSearchNearbyRequest(
             locationRestriction: circularLocationRestriction, placeProperties: placeProperties)
-        let includedTypes = ["grocery", "supermarket", "food_store"]
+        let includedTypes = ["grocery_store", "supermarket", "wholesaler"]
         request.includedTypes = includedTypes
 
         let callback: GMSPlaceSearchNearbyResultCallback = { [weak self] results, error in
