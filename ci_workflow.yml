@@ -1,0 +1,27 @@
+name: LesKitchens CI Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    name: Build and Test default scheme
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          
+      - name: Setup
+        run: |
+          chmod +x ./ci_post_clone.sh
+          ./ci_post_clone.sh
+          
+      - name: Build
+        run: |
+          xcodebuild clean build -project LesKitchens.xcodeproj -scheme LesKitchens -destination 'platform=iOS Simulator,name=iPhone 15,OS=latest' -allowProvisioningUpdates 
