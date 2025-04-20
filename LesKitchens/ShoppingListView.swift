@@ -85,7 +85,9 @@ struct ShoppingListView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color("BackgroundColor").ignoresSafeArea()
+                // Only use green background for the entire screen
+                Color(red: 0.5, green: 0.7, blue: 0.5)
+                    .ignoresSafeArea()
 
                 if viewModel.isLoading {
                     ProgressView()
@@ -95,6 +97,32 @@ struct ShoppingListView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 10) {
+                            // Add custom search bar with white background
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
+
+                                TextField("Search", text: $searchText)
+                                    .foregroundColor(.black)
+                                    .onChange(of: searchText) { oldValue, newValue in
+                                        filterItems(searchText: newValue)
+                                    }
+
+                                if !searchText.isEmpty {
+                                    Button(action: {
+                                        searchText = ""
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
+                                    }
+                                }
+                            }
+                            .padding(8)
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
+
                             ForEach(viewModel.shoppingItems) { item in
                                 shoppingItemView(item: item)
                             }
@@ -136,130 +164,168 @@ struct ShoppingListView: View {
                     }
                 }
             }
-            .searchable(text: $searchText)
-            .onChange(of: searchText) { oldValue, newValue in
-                filterItems(searchText: newValue)
-            }
         }
     }
 
     private func filterItems(searchText: String) {
         // Implementation of filterItems function
     }
-}
 
-// Add Shopping Item View (formerly Add Grocery Item)
-struct AddShoppingItemView: View {
-    @ObservedObject var viewModel: KitchenViewModel
-    @State private var itemName = ""
-    @State private var itemQuantity = "1"
-    @State private var itemUnit = "each"
-    @Environment(\.dismiss) private var dismiss
-    @State private var isGroupItem = false
+    // Add Shopping Item View (formerly Add Grocery Item)
+    struct AddShoppingItemView: View {
+        @ObservedObject var viewModel: KitchenViewModel
+        @State private var itemName = ""
+        @State private var itemQuantity = "1"
+        @State private var itemUnit = "each"
+        @Environment(\.dismiss) private var dismiss
+        @State private var isGroupItem = false
 
-    // Update unit when item name changes
-    private func updateUnitBasedOnItem() {
-        if !itemName.isEmpty {
-            itemUnit = GroceryDatabase.shared.getUnitForItem(itemName)
+        // Update unit when item name changes
+        private func updateUnitBasedOnItem() {
+            if !itemName.isEmpty {
+                itemUnit = GroceryDatabase.shared.getUnitForItem(itemName)
+            }
         }
-    }
 
-    var body: some View {
-        ZStack {
-            Color.black.opacity(0.3).ignoresSafeArea()
+        var body: some View {
+            ZStack {
+                Color.black.opacity(0.3).ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 20) {
-                Text("Add Shopping Item")
-                    .font(.title2)
-                    .fontWeight(.medium)
-                    .padding(.top, 5)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                VStack(alignment: .leading, spacing: 20) {
+                    Text("Add Shopping Item")
+                        .font(.title2)
+                        .fontWeight(.medium)
+                        .padding(.top, 5)
+                        .frame(maxWidth: .infinity, alignment: .center)
 
-                TextField("Item Name", text: $itemName)
-                    .padding()
-                    .background(Color.gray.opacity(0.2))
-                    .cornerRadius(8)
-                    .onChange(of: itemName) { oldValue, newValue in
-                        updateUnitBasedOnItem()
-                    }
+                    TextField("Item Name", text: $itemName)
+                        .padding()
+                        .background(Color.gray.opacity(0.2))
+                        .cornerRadius(8)
+                        .onChange(of: itemName) { oldValue, newValue in
+                            updateUnitBasedOnItem()
+                        }
 
-                HStack {
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Quantity")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Quantity")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
 
-                        TextField("1", text: $itemQuantity)
-                            .padding()
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(8)
-                            .frame(maxWidth: .infinity)
-                    }
+                            TextField("1", text: $itemQuantity)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(8)
+                                .frame(maxWidth: .infinity)
+                        }
 
-                    VStack(alignment: .leading, spacing: 5) {
-                        Text("Unit")
-                            .font(.caption)
-                            .foregroundColor(.secondary)
+                        VStack(alignment: .leading, spacing: 5) {
+                            Text("Unit")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
 
-                        TextField("each", text: $itemUnit)
-                            .padding()
-                            .background(Color.gray.opacity(0.2))
-                            .cornerRadius(8)
-                            .frame(maxWidth: .infinity)
-                    }
-                }
-
-                Spacer()
-
-                HStack {
-                    Button(action: {
-                        dismiss()
-                    }) {
-                        Text("Cancel")
-                            .foregroundColor(Color("ActionColor"))
+                            TextField("each", text: $itemUnit)
+                                .padding()
+                                .background(Color.gray.opacity(0.2))
+                                .cornerRadius(8)
+                                .frame(maxWidth: .infinity)
+                        }
                     }
 
                     Spacer()
 
-                    Button(action: {
-                        let newItem = ShoppingItem(
-                            name: itemName,
-                            quantity: Int(itemQuantity) ?? 1,
-                            groupItem: isGroupItem
-                        )
-                        viewModel.addShoppingItem(
-                            name: newItem.name,
-                            quantity: newItem.quantity,
-                            groupItem: newItem.groupItem
-                        )
-                        dismiss()
-                    }) {
-                        Text("Add")
-                            .foregroundColor(Color("ActionColor"))
-                    }
-                    .disabled(itemName.isEmpty)
-                }
-            }
-            .padding()
-            .background(Color("BackgroundColor"))
-            .cornerRadius(16)
-            .frame(width: 350, height: 250)
-        }
-    }
-}
+                    HStack {
+                        Button(action: {
+                            dismiss()
+                        }) {
+                            Text("Cancel")
+                                .foregroundColor(Color("ActionColor"))
+                        }
 
-#if DEBUG
-    // Preview for development
-    struct ShoppingListView_Previews: PreviewProvider {
-        static var previews: some View {
-            let viewModel = KitchenViewModel()
-            ShoppingListView(viewModel: viewModel)
-                .onAppear {
-                    // For previews, we'll check if Firebase is already configured
-                    if FirebaseApp.app() == nil {
-                        FirebaseApp.configure()
+                        Spacer()
+
+                        Button(action: {
+                            let newItem = ShoppingItem(
+                                name: itemName,
+                                quantity: Int(itemQuantity) ?? 1,
+                                groupItem: isGroupItem
+                            )
+                            viewModel.addShoppingItem(
+                                name: newItem.name,
+                                quantity: newItem.quantity,
+                                groupItem: newItem.groupItem
+                            )
+                            dismiss()
+                        }) {
+                            Text("Add")
+                                .foregroundColor(Color("ActionColor"))
+                        }
+                        .disabled(itemName.isEmpty)
                     }
                 }
+                .padding()
+                .background(Color("BackgroundColor"))
+                .cornerRadius(16)
+                .frame(width: 350, height: 250)
+            }
         }
     }
-#endif
+
+    // Add the WaveShape struct definition
+    struct ShoppingWaveShape: Shape {
+        var amplitude: CGFloat
+        var frequency: CGFloat
+        var phase: CGFloat
+
+        func path(in rect: CGRect) -> Path {
+            var path = Path()
+
+            // Safety check for zero width
+            if rect.width <= 0 {
+                return path
+            }
+
+            // Move to the bottom-leading corner
+            path.move(to: CGPoint(x: 0, y: rect.height))
+
+            // Draw the wave
+            let step: CGFloat = 5
+            for x in stride(from: 0, to: rect.width, by: step) {
+                let relativeX = x / rect.width
+                let y = sin(relativeX * frequency * .pi * 2 + phase) * amplitude + rect.height / 2
+                path.addLine(to: CGPoint(x: x, y: y))
+            }
+
+            // Add final point
+            let finalX = rect.width
+            let finalRelativeX = finalX / rect.width
+            let finalY =
+                sin(finalRelativeX * frequency * .pi * 2 + phase) * amplitude + rect.height / 2
+            path.addLine(to: CGPoint(x: finalX, y: finalY))
+
+            // Line to the bottom-trailing corner
+            path.addLine(to: CGPoint(x: rect.width, y: rect.height))
+
+            // Close the path
+            path.closeSubpath()
+
+            return path
+        }
+    }
+
+    #if DEBUG
+        // Preview for development
+        struct ShoppingListView_Previews: PreviewProvider {
+            static var previews: some View {
+                let viewModel = KitchenViewModel()
+                ShoppingListView(viewModel: viewModel)
+                    .onAppear {
+                        // For previews, we'll check if Firebase is already configured
+                        if FirebaseApp.app() == nil {
+                            FirebaseApp.configure()
+                        }
+                    }
+            }
+        }
+    #endif
+}

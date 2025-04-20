@@ -21,16 +21,13 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             if authViewModel.isAuthenticated {
-                // Main app content
-                ZStack {
-                    // Background view with wavy pattern
-                    BackgroundView()
-
+                // Main app content without separate BackgroundView
+                VStack(spacing: 0) {
                     // Tab view content
                     TabView(selection: $selectedTab) {
                         ShoppingListView(viewModel: kitchenViewModel)
                             .tabItem {
-                                Label("Shopping List", systemImage: "cart")
+                                Label("Shopping", systemImage: "cart")
                             }
                             .tag(0)
 
@@ -42,23 +39,23 @@ struct ContentView: View {
 
                         GroupsView(viewModel: kitchenViewModel)
                             .tabItem {
-                                Label("Groups", systemImage: "person.3")
+                                Label("Group", systemImage: "person.3")
                             }
                             .tag(2)
 
                         ProfileView()
                             .tabItem {
-                                Label("Profile", systemImage: "person.circle")
+                                Label("User", systemImage: "person.circle")
                             }
                             .tag(3)
                     }
-                    .overlay {
-                        if kitchenViewModel.isLoading {
-                            ProgressView()
-                                .scaleEffect(2)
-                                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                                .background(Color.black.opacity(0.4))
-                        }
+                }
+                .overlay {
+                    if kitchenViewModel.isLoading {
+                        ProgressView()
+                            .scaleEffect(2)
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                            .background(Color.black.opacity(0.4))
                     }
                 }
                 .onAppear {

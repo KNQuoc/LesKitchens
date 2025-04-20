@@ -228,37 +228,59 @@ struct InventoryView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color("BackgroundColor").ignoresSafeArea()
+                // Only use green background for the entire screen
+                Color(red: 0.5, green: 0.7, blue: 0.5)
+                    .ignoresSafeArea()
 
-                VStack {
-                    // Inventory selector dropdown
-                    dropdownMenuView()
+                if viewModel.isLoading {
+                    // Show loading indicator
+                    Spacer()
+                    ProgressView()
+                        .scaleEffect(1.5)
+                        .padding()
+                    Spacer()
+                } else if viewModel.inventoryItems.filter(shouldShowItem).isEmpty {
+                    Spacer()
+                    emptyStateView()
+                    Spacer()
+                } else {
+                    // Inventory items list
+                    ScrollView {
+                        VStack(spacing: 10) {
+                            // Add custom search bar with white background
+                            HStack {
+                                Image(systemName: "magnifyingglass")
+                                    .foregroundColor(.gray)
 
-                    if viewModel.isLoading {
-                        Spacer()
-                        ProgressView()
-                            .scaleEffect(1.5)
-                            .padding()
-                        Spacer()
-                    } else if viewModel.inventoryItems.filter(shouldShowItem).isEmpty {
-                        Spacer()
-                        emptyStateView()
-                        Spacer()
-                    } else {
-                        // Inventory items list
-                        ScrollView {
-                            VStack(spacing: 10) {
-                                ForEach(viewModel.inventoryItems) { item in
-                                    if shouldShowItem(item) {
-                                        inventoryItemView(item: item)
+                                TextField("Search", text: $searchText)
+                                    .foregroundColor(.black)
+                                    .onChange(of: searchText) { oldValue, newValue in
+                                        filterItems(searchText: newValue)
+                                    }
+
+                                if !searchText.isEmpty {
+                                    Button(action: {
+                                        searchText = ""
+                                    }) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(.gray)
                                     }
                                 }
                             }
-                            .padding()
-                        }
-                    }
+                            .padding(8)
+                            .background(Color.white)
+                            .cornerRadius(10)
+                            .padding(.horizontal)
+                            .padding(.top, 8)
 
-                    Spacer()
+                            ForEach(viewModel.inventoryItems) { item in
+                                if shouldShowItem(item) {
+                                    inventoryItemView(item: item)
+                                }
+                            }
+                        }
+                        .padding()
+                    }
                 }
 
                 VStack {
@@ -302,10 +324,6 @@ struct InventoryView: View {
                 if dropdownOpen {
                     dropdownOpen = false
                 }
-            }
-            .searchable(text: $searchText)
-            .onChange(of: searchText) { oldValue, newValue in
-                filterItems(searchText: newValue)
             }
         }
     }
@@ -447,6 +465,47 @@ struct AddInventoryItemView: View {
             .cornerRadius(16)
             .frame(width: 350, height: 350)
         }
+    }
+}
+
+// Add the WaveShape struct definition for InventoryView
+struct InventoryWaveShape: Shape {
+    var amplitude: CGFloat
+    var frequency: CGFloat
+    var phase: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+
+        // Safety check for zero width
+        if rect.width <= 0 {
+            return path
+        }
+
+        // Move to the bottom-leading corner
+        path.move(to: CGPoint(x: 0, y: rect.height))
+
+        // Draw the wave
+        let step: CGFloat = 5
+        for x in stride(from: 0, to: rect.width, by: step) {
+            let relativeX = x / rect.width
+            let y = sin(relativeX * frequency * .pi * 2 + phase) * amplitude + rect.height / 2
+            path.addLine(to: CGPoint(x: x, y: y))
+        }
+
+        // Add final point
+        let finalX = rect.width
+        let finalRelativeX = finalX / rect.width
+        let finalY = sin(finalRelativeX * frequency * .pi * 2 + phase) * amplitude + rect.height / 2
+        path.addLine(to: CGPoint(x: finalX, y: finalY))
+
+        // Line to the bottom-trailing corner
+        path.addLine(to: CGPoint(x: rect.width, y: rect.height))
+
+        // Close the path
+        path.closeSubpath()
+
+        return path
     }
 }
 
