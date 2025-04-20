@@ -38,78 +38,121 @@ struct InventoryView: View {
         return item.inventoryId == nil
     }
 
-    // Helper view for dropdown menu
-    private func dropdownMenuView() -> some View {
-        VStack {
-            // Dropdown header button
+    // Enhanced dropdown menu view
+    private func enhancedDropdownMenuView() -> some View {
+        VStack(spacing: 0) {
+            // Dropdown header button with improved design
             Button(action: {
                 withAnimation {
                     dropdownOpen.toggle()
                 }
             }) {
-                HStack {
+                HStack(spacing: 4) {
                     Text(selectedInventory == nil ? "Personal Inventory" : selectedInventory!)
-                        .font(.headline)
+                        .font(.subheadline)
+                        .foregroundColor(.primary)
 
-                    Image(systemName: "chevron.down")
-                        .rotationEffect(Angle(degrees: dropdownOpen ? 180 : 0))
+                    Image(systemName: dropdownOpen ? "chevron.up" : "chevron.down")
+                        .font(.caption)
+                        .foregroundColor(.gray)
                 }
-                .foregroundColor(.primary)
-                .padding(.vertical, 10)
-                .padding(.horizontal)
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 8)
+                .padding(.horizontal, 12)
+                .background(Color.white)
+                .cornerRadius(8)
             }
+            .alignmentGuide(.trailing) { d in d[.trailing] }
 
             // Dropdown content
             if dropdownOpen {
-                dropdownOptionsView()
+                enhancedDropdownOptionsView()
+                    .padding(.top, 4)
+                    .transition(.opacity)
+                    .zIndex(2)
             }
         }
-        .padding(.top)
-        .zIndex(1)  // Ensure dropdown appears above other content
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.horizontal)
     }
 
-    // Helper view for dropdown options
-    private func dropdownOptionsView() -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+    // Enhanced dropdown options view
+    private func enhancedDropdownOptionsView() -> some View {
+        VStack(alignment: .leading, spacing: 0) {
             // Personal inventory option
-            Button(action: {
+            InventoryOptionButton(
+                label: "Personal Inventory",
+                iconName: "person",
+                isSelected: selectedInventory == nil
+            ) {
                 selectedInventory = nil
                 selectedGroupInventoryId = nil
                 savedInventoryId = nil
                 savedInventoryName = nil
-                dropdownOpen = false
-            }) {
-                Text("Personal Inventory")
-                    .font(.subheadline)
-                    .padding(.vertical, 8)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                withAnimation {
+                    dropdownOpen = false
+                }
             }
-            .background(selectedInventory == nil ? Color.gray.opacity(0.2) : Color.clear)
+
+            if !viewModel.groupInventories.isEmpty {
+                Divider()
+            }
 
             // Group inventory options
             ForEach(viewModel.groupInventories) { inventory in
-                Button(action: {
+                InventoryOptionButton(
+                    label: inventory.name,
+                    iconName: "person.2",
+                    isSelected: selectedInventory == inventory.name
+                ) {
                     selectedInventory = inventory.name
                     selectedGroupInventoryId = inventory.id
                     savedInventoryId = inventory.id
                     savedInventoryName = inventory.name
-                    dropdownOpen = false
-                }) {
-                    Text(inventory.name)
-                        .font(.subheadline)
-                        .padding(.vertical, 8)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    withAnimation {
+                        dropdownOpen = false
+                    }
                 }
-                .background(
-                    selectedInventory == inventory.name ? Color.gray.opacity(0.2) : Color.clear)
+
+                if inventory.id != viewModel.groupInventories.last?.id {
+                    Divider()
+                }
             }
         }
-        .padding(.horizontal)
-        .background(Color("CardColor"))
-        .cornerRadius(10)
-        .padding(.horizontal)
-        .transition(.opacity)
+        .padding(.vertical, 4)
+        .background(Color.white)
+        .cornerRadius(8)
+        .shadow(color: Color.black.opacity(0.15), radius: 3, x: 0, y: 2)
+        .frame(width: 220, alignment: .trailing)
+    }
+
+    // Button for inventory options
+    private func InventoryOptionButton(
+        label: String, iconName: String, isSelected: Bool, action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack {
+                Image(systemName: iconName)
+                    .foregroundColor(isSelected ? Color("ActionColor") : .gray)
+                    .font(.footnote)
+                    .frame(width: 20)
+
+                Text(label)
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+
+                Spacer()
+
+                if isSelected {
+                    Image(systemName: "checkmark")
+                        .foregroundColor(Color("ActionColor"))
+                        .font(.footnote)
+                }
+            }
+            .padding(.vertical, 8)
+            .padding(.horizontal, 12)
+            .background(isSelected ? Color("ActionColor").opacity(0.1) : Color.white)
+        }
+        .buttonStyle(PlainButtonStyle())
     }
 
     // Extract inventory item into separate view
@@ -232,57 +275,65 @@ struct InventoryView: View {
                 Color(red: 0.5, green: 0.7, blue: 0.5)
                     .ignoresSafeArea()
 
-                if viewModel.isLoading {
-                    // Show loading indicator
-                    Spacer()
-                    ProgressView()
-                        .scaleEffect(1.5)
-                        .padding()
-                    Spacer()
-                } else if viewModel.inventoryItems.filter(shouldShowItem).isEmpty {
-                    Spacer()
-                    emptyStateView()
-                    Spacer()
-                } else {
-                    // Inventory items list
-                    ScrollView {
-                        VStack(spacing: 10) {
-                            // Add custom search bar with white background
-                            HStack {
-                                Image(systemName: "magnifyingglass")
-                                    .foregroundColor(.gray)
+                VStack(spacing: 0) {
+                    // Add the enhanced dropdown at the top, right-aligned
+                    enhancedDropdownMenuView()
+                        .padding(.top, 4)
+                        .zIndex(2)
 
-                                TextField("Search", text: $searchText)
-                                    .foregroundColor(.black)
-                                    .onChange(of: searchText) { oldValue, newValue in
-                                        filterItems(searchText: newValue)
+                    if viewModel.isLoading {
+                        // Show loading indicator
+                        Spacer()
+                        ProgressView()
+                            .scaleEffect(1.5)
+                            .padding()
+                        Spacer()
+                    } else if viewModel.inventoryItems.filter(shouldShowItem).isEmpty {
+                        Spacer()
+                        emptyStateView()
+                        Spacer()
+                    } else {
+                        // Inventory items list
+                        ScrollView {
+                            VStack(spacing: 10) {
+                                // Add custom search bar with white background
+                                HStack {
+                                    Image(systemName: "magnifyingglass")
+                                        .foregroundColor(.gray)
+
+                                    TextField("Search", text: $searchText)
+                                        .foregroundColor(.black)
+                                        .onChange(of: searchText) { oldValue, newValue in
+                                            filterItems(searchText: newValue)
+                                        }
+
+                                    if !searchText.isEmpty {
+                                        Button(action: {
+                                            searchText = ""
+                                        }) {
+                                            Image(systemName: "xmark.circle.fill")
+                                                .foregroundColor(.gray)
+                                        }
                                     }
+                                }
+                                .padding(8)
+                                .background(Color.white)
+                                .cornerRadius(10)
+                                .padding(.horizontal)
+                                .padding(.top, 8)
 
-                                if !searchText.isEmpty {
-                                    Button(action: {
-                                        searchText = ""
-                                    }) {
-                                        Image(systemName: "xmark.circle.fill")
-                                            .foregroundColor(.gray)
+                                ForEach(viewModel.inventoryItems) { item in
+                                    if shouldShowItem(item) {
+                                        inventoryItemView(item: item)
                                     }
                                 }
                             }
-                            .padding(8)
-                            .background(Color.white)
-                            .cornerRadius(10)
-                            .padding(.horizontal)
-                            .padding(.top, 8)
-
-                            ForEach(viewModel.inventoryItems) { item in
-                                if shouldShowItem(item) {
-                                    inventoryItemView(item: item)
-                                }
-                            }
+                            .padding()
                         }
-                        .padding()
                     }
                 }
 
+                // Floating add button
                 VStack {
                     Spacer()
 
@@ -322,7 +373,9 @@ struct InventoryView: View {
             .onTapGesture {
                 // Close dropdown when tapping outside
                 if dropdownOpen {
-                    dropdownOpen = false
+                    withAnimation {
+                        dropdownOpen = false
+                    }
                 }
             }
         }
