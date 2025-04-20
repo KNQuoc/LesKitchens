@@ -38,7 +38,8 @@ xcuserdata/
 .build/
 Packages/
 Package.pins
-Package.resolved
+# Only ignore Package.resolved at the root
+/Package.resolved
 .swiftpm/
 DerivedData/
 
@@ -46,6 +47,7 @@ DerivedData/
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
+!*.xcodeproj/project.xcworkspace/
 !*.xcworkspace/contents.xcworkspacedata
 **/xcshareddata/WorkspaceSettings.xcsettings
 
