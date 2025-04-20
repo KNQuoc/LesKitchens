@@ -40,10 +40,9 @@ Packages/
 Package.pins
 Package.resolved
 .swiftpm/
-*.xcodeproj
 DerivedData/
 
-# Xcode Patch
+# Xcode Project
 *.xcodeproj/*
 !*.xcodeproj/project.pbxproj
 !*.xcodeproj/xcshareddata/
