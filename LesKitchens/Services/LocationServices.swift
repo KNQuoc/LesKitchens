@@ -320,13 +320,178 @@ public class LocationServicesManager {
         // Request location permissions
         locationManager.requestLocationPermissions()
 
-        // Request notification permissions
-        UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound, .badge]) {
-            granted, error in
+        // Request notification permissions with enhanced options and debug logging
+        print("🔔 Requesting notification permissions...")
+        UNUserNotificationCenter.current().requestAuthorization(
+            options: [.alert, .sound, .badge, .provisional]
+        ) { granted, error in
             if granted {
-                print("Notification permission granted")
-            } else if let error = error {
-                print("Notification permission error: \(error.localizedDescription)")
+                print("✅ Notification permission granted")
+                // Register for remote notifications (important for iOS/iPadOS)
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            } else {
+                print("❌ Notification permission denied")
+                if let error = error {
+                    print("⚠️ Notification permission error: \(error.localizedDescription)")
+                }
+            }
+
+            // Check current notification settings
+            self.checkNotificationStatus()
+        }
+    }
+
+    private func checkNotificationStatus() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("📱 Device notification settings:")
+            print("- Authorization Status: \(settings.authorizationStatus.rawValue)")
+            print("- Alert Setting: \(settings.alertSetting.rawValue)")
+            print("- Sound Setting: \(settings.soundSetting.rawValue)")
+            print("- Badge Setting: \(settings.badgeSetting.rawValue)")
+            print("- Notification Center Setting: \(settings.notificationCenterSetting.rawValue)")
+            print("- Lock Screen Setting: \(settings.lockScreenSetting.rawValue)")
+            print("- Critical Alert Setting: \(settings.criticalAlertSetting.rawValue)")
+            if #available(iOS 15.0, *) {
+                print("- Scheduled Delivery Setting: \(settings.scheduledDeliverySetting.rawValue)")
+                print("- Direct Messages Setting: \(settings.directMessagesSetting.rawValue)")
+            }
+        }
+    }
+
+    private func sendProximityNotification(for store: LocationServicesStore) {
+        print("🔔 Attempting to send proximity notification for \(store.name)...")
+
+        // Get shopping items from UserDefaults
+        let content = UNMutableNotificationContent()
+        if let shoppingItems = UserDefaults.standard.array(forKey: "shopping_items") as? [String],
+            !shoppingItems.isEmpty
+        {
+            content.title = "📍 You're near \(store.name)!"
+            content.body = "Remember to get: \(shoppingItems.joined(separator: ", "))"
+            content.sound = UNNotificationSound.default
+            content.badge = NSNumber(value: shoppingItems.count)
+
+            // Add thread identifier for proper grouping
+            content.threadIdentifier = "store-proximity-\(store.id)"
+
+            // Add relevant information for the notification
+            content.userInfo = [
+                "storeId": store.id,
+                "storeName": store.name,
+                "notificationType": "proximity",
+            ]
+        } else {
+            content.title = "📍 You're near \(store.name)!"
+            content.body = "Check your shopping list!"
+            content.sound = UNNotificationSound.default
+            content.threadIdentifier = "store-proximity-\(store.id)"
+        }
+
+        // Create trigger with a 1-second delay to ensure proper delivery
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Create request with unique identifier
+        let identifier = "grocery-proximity-\(store.id)-\(UUID().uuidString)"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
+        )
+
+        // Request authorization and schedule notification
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("🔔 Current notification settings for proximity alert:")
+            print("- Authorization Status: \(settings.authorizationStatus.rawValue)")
+
+            guard
+                settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+            else {
+                print("⚠️ Notifications not authorized for proximity alerts")
+                // Re-request permissions if denied
+                self.requestPermissions()
+                return
+            }
+
+            // Schedule notification
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Error sending proximity notification: \(error.localizedDescription)")
+                } else {
+                    print(
+                        "✅ Proximity notification scheduled for \(store.name) with ID: \(identifier)"
+                    )
+                }
+            }
+        }
+    }
+
+    private func sendGeofenceEntryNotification(for store: LocationServicesStore) {
+        print("🔔 Attempting to send geofence entry notification for \(store.name)...")
+
+        // Get shopping items from UserDefaults
+        let content = UNMutableNotificationContent()
+        if let shoppingItems = UserDefaults.standard.array(forKey: "shopping_items") as? [String],
+            !shoppingItems.isEmpty
+        {
+            content.title = "🏪 Welcome to \(store.name)!"
+            content.body = "Shopping List: \(shoppingItems.joined(separator: ", "))"
+            content.sound = UNNotificationSound.default
+            content.badge = NSNumber(value: shoppingItems.count)
+
+            // Add thread identifier for proper grouping
+            content.threadIdentifier = "store-entry-\(store.id)"
+
+            // Add relevant information
+            content.userInfo = [
+                "storeId": store.id,
+                "storeName": store.name,
+                "notificationType": "geofence",
+            ]
+        } else {
+            content.title = "🏪 Welcome to \(store.name)!"
+            content.body = "Check your shopping list!"
+            content.sound = UNNotificationSound.default
+            content.threadIdentifier = "store-entry-\(store.id)"
+        }
+
+        // Create trigger with a 1-second delay
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Create request with unique identifier
+        let identifier = "geofence-entry-\(store.id)-\(UUID().uuidString)"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
+        )
+
+        // Request authorization and schedule notification
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("🔔 Current notification settings for geofence alert:")
+            print("- Authorization Status: \(settings.authorizationStatus.rawValue)")
+
+            guard
+                settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+            else {
+                print("⚠️ Notifications not authorized for geofence alerts")
+                // Re-request permissions if denied
+                self.requestPermissions()
+                return
+            }
+
+            // Schedule notification
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Error sending geofence notification: \(error.localizedDescription)")
+                } else {
+                    print(
+                        "✅ Geofence notification scheduled for \(store.name) with ID: \(identifier)"
+                    )
+                }
             }
         }
     }
@@ -416,6 +581,9 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
     private var lastProximityNotificationTime: Date = Date.distantPast
     private var lastNearbySearchTime: Date = Date.distantPast
 
+    // Timer for periodic distance checks
+    private var distanceCheckTimer: Timer?
+
     override init() {
         super.init()
 
@@ -431,6 +599,118 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
         #endif
     }
 
+    private func requestPermissions() {
+        // Request location permissions
+        clLocationManager.requestAlwaysAuthorization()
+
+        // Request notification permissions with enhanced options and debug logging
+        print("🔔 Requesting notification permissions...")
+        UNUserNotificationCenter.current().requestAuthorization(
+            options: [.alert, .sound, .badge, .provisional]
+        ) { granted, error in
+            if granted {
+                print("✅ Notification permission granted")
+                // Register for remote notifications (important for iOS/iPadOS)
+                DispatchQueue.main.async {
+                    UIApplication.shared.registerForRemoteNotifications()
+                }
+            } else {
+                print("❌ Notification permission denied")
+                if let error = error {
+                    print("⚠️ Notification permission error: \(error.localizedDescription)")
+                }
+            }
+
+            // Check current notification settings
+            self.checkNotificationStatus()
+        }
+    }
+
+    private func checkNotificationStatus() {
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("📱 Device notification settings:")
+            print("- Authorization Status: \(settings.authorizationStatus.rawValue)")
+            print("- Alert Setting: \(settings.alertSetting.rawValue)")
+            print("- Sound Setting: \(settings.soundSetting.rawValue)")
+            print("- Badge Setting: \(settings.badgeSetting.rawValue)")
+            print("- Notification Center Setting: \(settings.notificationCenterSetting.rawValue)")
+            print("- Lock Screen Setting: \(settings.lockScreenSetting.rawValue)")
+            print("- Critical Alert Setting: \(settings.criticalAlertSetting.rawValue)")
+            if #available(iOS 15.0, *) {
+                print("- Scheduled Delivery Setting: \(settings.scheduledDeliverySetting.rawValue)")
+                print("- Direct Messages Setting: \(settings.directMessagesSetting.rawValue)")
+            }
+        }
+    }
+
+    private func sendProximityNotification(for store: LocationServicesStore) {
+        print("🔔 Attempting to send proximity notification for \(store.name)...")
+
+        // Get shopping items from UserDefaults
+        let content = UNMutableNotificationContent()
+        if let shoppingItems = UserDefaults.standard.array(forKey: "shopping_items") as? [String],
+            !shoppingItems.isEmpty
+        {
+            content.title = "📍 You're near \(store.name)!"
+            content.body = "Remember to get: \(shoppingItems.joined(separator: ", "))"
+            content.sound = UNNotificationSound.default
+            content.badge = NSNumber(value: shoppingItems.count)
+
+            // Add thread identifier for proper grouping
+            content.threadIdentifier = "store-proximity-\(store.id)"
+
+            // Add relevant information for the notification
+            content.userInfo = [
+                "storeId": store.id,
+                "storeName": store.name,
+                "notificationType": "proximity",
+            ]
+        } else {
+            content.title = "📍 You're near \(store.name)!"
+            content.body = "Check your shopping list!"
+            content.sound = UNNotificationSound.default
+            content.threadIdentifier = "store-proximity-\(store.id)"
+        }
+
+        // Create trigger with a 1-second delay to ensure proper delivery
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Create request with unique identifier
+        let identifier = "grocery-proximity-\(store.id)-\(UUID().uuidString)"
+        let request = UNNotificationRequest(
+            identifier: identifier,
+            content: content,
+            trigger: trigger
+        )
+
+        // Request authorization and schedule notification
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("🔔 Current notification settings for proximity alert:")
+            print("- Authorization Status: \(settings.authorizationStatus.rawValue)")
+
+            guard
+                settings.authorizationStatus == .authorized
+                    || settings.authorizationStatus == .provisional
+            else {
+                print("⚠️ Notifications not authorized for proximity alerts")
+                // Re-request permissions if denied
+                self.requestPermissions()
+                return
+            }
+
+            // Schedule notification
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Error sending proximity notification: \(error.localizedDescription)")
+                } else {
+                    print(
+                        "✅ Proximity notification scheduled for \(store.name) with ID: \(identifier)"
+                    )
+                }
+            }
+        }
+    }
+
     func requestLocationPermissions() {
         clLocationManager.requestAlwaysAuthorization()
     }
@@ -438,11 +718,75 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
     func startLocationUpdates() {
         print("Starting location updates...")
         clLocationManager.startUpdatingLocation()
+
+        // Start periodic distance checks
+        startPeriodicDistanceChecks()
     }
 
     func stopLocationUpdates() {
         print("Stopping location updates...")
         clLocationManager.stopUpdatingLocation()
+
+        // Stop periodic distance checks
+        stopPeriodicDistanceChecks()
+    }
+
+    // MARK: - Periodic Distance Checks
+
+    private func startPeriodicDistanceChecks() {
+        // Invalidate existing timer if any
+        distanceCheckTimer?.invalidate()
+
+        // Create new timer that fires every 30 seconds
+        distanceCheckTimer = Timer.scheduledTimer(withTimeInterval: 30.0, repeats: true) {
+            [weak self] _ in
+            guard let self = self, let currentLocation = self.currentLocation else {
+                print("📍 No current location available for distance check")
+                return
+            }
+
+            self.logDistancesToStores(from: currentLocation)
+        }
+
+        print("✅ Started periodic distance checks (every 30 seconds)")
+    }
+
+    private func stopPeriodicDistanceChecks() {
+        distanceCheckTimer?.invalidate()
+        distanceCheckTimer = nil
+        print("❌ Stopped periodic distance checks")
+    }
+
+    private func logDistancesToStores(from location: CLLocation) {
+        print(
+            "\n📍 Current location: \(location.coordinate.latitude), \(location.coordinate.longitude)"
+        )
+
+        if groceryStoreLocations.isEmpty {
+            print("ℹ️ No grocery stores to check distances")
+            return
+        }
+
+        print("🏪 Distances to nearby stores:")
+        print("------------------------------")
+
+        // Sort stores by distance
+        let storesWithDistances = groceryStoreLocations.map {
+            store -> (store: LocationServicesStore, distance: CLLocationDistance) in
+            let storeLocation = CLLocation(latitude: store.latitude, longitude: store.longitude)
+            let distance = location.distance(from: storeLocation)
+            return (store, distance)
+        }.sorted { $0.distance < $1.distance }
+
+        for (store, distance) in storesWithDistances {
+            let distanceKm = distance / 1000.0
+            print("📌 \(store.name): \(String(format: "%.2f", distanceKm))km")
+
+            if distance <= proximityRadius {
+                print("🎯 Within proximity radius! (\(Int(distance))m)")
+            }
+        }
+        print("------------------------------\n")
     }
 
     // MARK: - Location updates
@@ -450,7 +794,6 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let location = locations.last else { return }
 
-        print("Location update: \(location.coordinate.latitude), \(location.coordinate.longitude)")
         currentLocation = location
 
         // Check proximity to grocery stores
@@ -490,52 +833,31 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
             return
         }
 
-        // Limit notifications to once every 10 minutes to avoid spamming
+        // Reduce notification cooldown to 5 minutes instead of 10
         let currentTime = Date()
-        if currentTime.timeIntervalSince(lastProximityNotificationTime) < 600 {
-            print("Skipping proximity check - last notification was less than 10 minutes ago")
+        if currentTime.timeIntervalSince(lastProximityNotificationTime) < 300 {
+            print("Skipping proximity check - last notification was less than 5 minutes ago")
             return
         }
 
-        print("Checking proximity to \(groceryStoreLocations.count) grocery stores")
+        print("🔍 Checking proximity to \(groceryStoreLocations.count) grocery stores")
 
-        for store in groceryStoreLocations {
+        // Sort stores by distance and check the closest ones first
+        let nearbyStores = groceryStoreLocations.map {
+            store -> (store: LocationServicesStore, distance: CLLocationDistance) in
             let storeLocation = CLLocation(latitude: store.latitude, longitude: store.longitude)
             let distance = userLocation.distance(from: storeLocation)
+            return (store, distance)
+        }.sorted { $0.distance < $1.distance }
 
-            print("Distance to \(store.name): \(distance)m")
+        for (store, distance) in nearbyStores {
+            print("📍 Distance to \(store.name): \(Int(distance))m")
 
             if distance <= proximityRadius {
-                print("🛒 User is within \(proximityRadius)m of \(store.name)!")
+                print("🎯 User is within \(proximityRadius)m of \(store.name)!")
                 sendProximityNotification(for: store)
                 lastProximityNotificationTime = currentTime
                 break  // Only send one notification even if multiple stores are nearby
-            }
-        }
-    }
-
-    private func sendProximityNotification(for store: LocationServicesStore) {
-        let content = UNMutableNotificationContent()
-        content.title = "You're near \(store.name)!"
-        content.body = "Time to check your shopping list"
-        content.sound = UNNotificationSound.default
-
-        // Create trigger (immediate)
-        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-
-        // Create request
-        let request = UNNotificationRequest(
-            identifier: "grocery-proximity-\(UUID().uuidString)",
-            content: content,
-            trigger: trigger
-        )
-
-        // Schedule notification
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Error sending notification: \(error.localizedDescription)")
-            } else {
-                print("✅ Proximity notification sent for \(store.name)")
             }
         }
     }
@@ -775,10 +1097,30 @@ private class GeofencingManager: NSObject, CLLocationManagerDelegate {
         // Remove any existing geofences
         removeAllGeofences()
 
-        print("Creating geofences for \(stores.count) stores")
+        // Get current location
+        guard let currentLocation = clLocationManager.location else {
+            print("⚠️ Cannot create geofences: Current location not available")
+            return
+        }
 
-        // Create a geofence for each store
-        for store in stores {
+        // Sort stores by distance to current location
+        let sortedStores = stores.sorted { store1, store2 in
+            let location1 = CLLocation(latitude: store1.latitude, longitude: store1.longitude)
+            let location2 = CLLocation(latitude: store2.latitude, longitude: store2.longitude)
+            return currentLocation.distance(from: location1)
+                < currentLocation.distance(from: location2)
+        }
+
+        // Take only the closest 20 stores (iOS limit)
+        let maxRegions = 20
+        let nearestStores = Array(sortedStores.prefix(maxRegions))
+
+        print(
+            "Creating geofences for \(nearestStores.count) nearest stores (out of \(stores.count) total)"
+        )
+
+        // Create a geofence for each nearest store
+        for store in nearestStores {
             let identifier = "store_\(store.id)"
             let center = CLLocationCoordinate2D(
                 latitude: store.latitude, longitude: store.longitude)
@@ -795,15 +1137,24 @@ private class GeofencingManager: NSObject, CLLocationManagerDelegate {
             // Add to our tracking list
             monitoredGeofences.append(region)
 
+            let distance = currentLocation.distance(
+                from: CLLocation(latitude: store.latitude, longitude: store.longitude))
             print(
-                "Added geofence for: \(store.name) at \(store.latitude), \(store.longitude) with radius \(proximityRadius)m"
+                "✅ Added geofence for: \(store.name) at \(String(format: "%.2f", distance/1000))km away"
             )
         }
 
-        print("Now monitoring \(monitoredGeofences.count) geofences")
+        print("Now monitoring \(monitoredGeofences.count) nearest geofences")
 
-        // Store the grocery locations for later reference
+        // Store all grocery locations for later reference, even those we're not monitoring
         self.groceryStoreLocations = stores
+
+        // Log stores that couldn't be monitored
+        if stores.count > maxRegions {
+            print(
+                "⚠️ Note: \(stores.count - maxRegions) stores are beyond the monitoring limit and will be checked using proximity instead"
+            )
+        }
     }
 
     private func sendGeofenceEntryNotification(for region: CLRegion) {
@@ -814,43 +1165,61 @@ private class GeofencingManager: NSObject, CLLocationManagerDelegate {
 
         // Find the store that corresponds to this geofence
         guard let store = groceryStoreLocations.first(where: { $0.id == String(identifier) }) else {
-            // If we can't find the specific store, send a generic notification
             sendGenericGroceryNotification()
             return
         }
 
-        print("Entered geofence for: \(store.name)")
+        print("🏪 Entered geofence for: \(store.name)")
 
-        // Limit notifications to once every 10 minutes
+        // Reduce notification cooldown to 5 minutes
         let currentTime = Date()
-        if currentTime.timeIntervalSince(lastGeofenceNotificationTime) < 600 {
-            print("Skipping notification - last one was less than 10 minutes ago")
+        if currentTime.timeIntervalSince(lastGeofenceNotificationTime) < 300 {
+            print("Skipping notification - last one was less than 5 minutes ago")
             return
         }
 
-        // Create notification content
+        // Get shopping items from UserDefaults
         let content = UNMutableNotificationContent()
-        content.title = "You're at \(store.name)!"
-        content.body = "Time to check your shopping list"
-        content.sound = UNNotificationSound.default
+        if let shoppingItems = UserDefaults.standard.array(forKey: "shopping_items") as? [String],
+            !shoppingItems.isEmpty
+        {
+            content.title = "🏪 Welcome to \(store.name)!"
+            content.body = "Shopping List: \(shoppingItems.joined(separator: ", "))"
+            content.sound = UNNotificationSound.default
+
+            // Add shopping list count as badge
+            content.badge = NSNumber(value: shoppingItems.count)
+        } else {
+            content.title = "🏪 Welcome to \(store.name)!"
+            content.body = "Check your shopping list!"
+            content.sound = UNNotificationSound.default
+        }
 
         // Create trigger (immediate)
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
 
-        // Create request
+        // Create request with unique identifier that includes store ID
         let request = UNNotificationRequest(
-            identifier: "geofence-entry-\(UUID().uuidString)",
+            identifier: "geofence-entry-\(store.id)-\(UUID().uuidString)",
             content: content,
             trigger: trigger
         )
 
-        // Schedule notification
-        UNUserNotificationCenter.current().add(request) { error in
-            if let error = error {
-                print("Error sending geofence notification: \(error.localizedDescription)")
-            } else {
-                print("✅ Geofence notification sent for \(store.name)")
-                self.lastGeofenceNotificationTime = currentTime
+        // Request authorization before sending notification
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            guard settings.authorizationStatus == .authorized else {
+                print("⚠️ Notifications not authorized")
+                return
+            }
+
+            // Schedule notification
+            UNUserNotificationCenter.current().add(request) { error in
+                if let error = error {
+                    print("❌ Error sending geofence notification: \(error.localizedDescription)")
+                } else {
+                    print("✅ Geofence notification sent for \(store.name)")
+                    self.lastGeofenceNotificationTime = currentTime
+                }
             }
         }
     }
@@ -895,7 +1264,7 @@ private class GeofencingManager: NSObject, CLLocationManagerDelegate {
         let placeClient = GMSPlacesClient.shared()
 
         // Define the search area as a circle around the user's location with a larger radius for geofencing
-        let circularLocationRestriction = GMSPlaceCircularLocationOption(location.coordinate, 5000)  // 5km radius for geofencing
+        let circularLocationRestriction = GMSPlaceCircularLocationOption(location.coordinate, 20000)  // 20km radius for geofencing
 
         // Specify the fields to return in the GMSPlace object
         let placeProperties = [GMSPlaceProperty.name, GMSPlaceProperty.coordinate].map {

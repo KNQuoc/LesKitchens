@@ -1,6 +1,8 @@
 import SwiftUI
 
 struct BackgroundView: View {
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         GeometryReader { geometry in
             ZStack {
@@ -9,16 +11,23 @@ struct BackgroundView: View {
 
                 // Top wavy pattern
                 WavyShape(amplitude: 20, frequency: 0.1, phase: 0)
-                    .fill(Color("BackgroundColor").opacity(0.5))
+                    .fill(
+                        Color("BackgroundColor")
+                            .opacity(colorScheme == .dark ? 0.3 : 0.5)
+                    )
                     .frame(height: geometry.size.height * 0.5)
                     .offset(y: -geometry.size.height * 0.3)
 
                 // Bottom wavy pattern
                 WavyShape(amplitude: 15, frequency: 0.15, phase: .pi)
-                    .fill(Color("BackgroundColor").opacity(0.7))
+                    .fill(
+                        Color("BackgroundColor")
+                            .opacity(colorScheme == .dark ? 0.4 : 0.7)
+                    )
                     .frame(height: geometry.size.height * 0.4)
                     .offset(y: geometry.size.height * 0.35)
             }
+            .animation(.easeInOut(duration: 0.3), value: colorScheme)
         }
     }
 }

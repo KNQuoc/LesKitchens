@@ -447,33 +447,50 @@ class LocationPermissionDelegate: NSObject, CLLocationManagerDelegate {
 // Create a direct wrapper for LocationServicesManager using runtime lookup
 class LocationServicesBridge {
   static func bootstrap() {
-    print("🔍 DEBUG: Trying direct call to LocationServicesManager.bootstrap")
+    print("🔍 DEBUG: LocationServicesBridge - Starting bootstrap process")
 
-    // --- Try Direct Call First (Assuming Same Target) ---
-    // If LocationServicesManager is in the same target, this direct call should work.
-    LocationServicesManager.bootstrap()
-    print("✅ Successfully called LocationServicesManager.bootstrap directly")
-    return
+    // Check if LocationServicesManager exists in the module
+    if let bundleName = Bundle.main.infoDictionary?["CFBundleExecutable"] as? String {
+      print("🔍 DEBUG: Bundle name: \(bundleName)")
 
-    // --- Fallback to Runtime Lookup (If Direct Call Fails) ---
-    /* // Uncomment this block if the direct call above fails at compile/runtime
-    print("🔍 DEBUG: Direct call failed, falling back to runtime lookup via bridge")
-    if let managerClass = findLocationServicesManagerClass(),
-       let bootstrapSelector = NSSelectorFromString("bootstrap"),
-       managerClass.responds(to: bootstrapSelector) {
-    
-      print("✅ Found LocationServicesManager class and bootstrap method via runtime")
-    
-      #if swift(>=5.8)
-      let _ = managerClass.performSelector(onMainThread: bootstrapSelector, with: nil, waitUntilDone: true)
-      #else
-      let _ = managerClass.perform(bootstrapSelector)
-      #endif
-    
-      return
+      let possibleClassNames = [
+        "LocationServicesManager",
+        "\(bundleName).LocationServicesManager",
+        "\(bundleName).Services.LocationServicesManager",
+      ]
+
+      print("🔍 DEBUG: Checking class names: \(possibleClassNames.joined(separator: ", "))")
+
+      for className in possibleClassNames {
+        if NSClassFromString(className) != nil {
+          print("✅ Found LocationServicesManager as: \(className)")
+        }
+      }
     }
-    print("⚠️ Failed to find or call LocationServicesManager.bootstrap via runtime bridge")
-    */
+
+    // Try direct call first
+    do {
+      print("🔍 DEBUG: Attempting direct call to LocationServicesManager.bootstrap")
+      LocationServicesManager.bootstrap()
+      print("✅ Successfully called LocationServicesManager.bootstrap directly")
+
+      // Verify the service is running
+      DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+        if let servicesManager = NSClassFromString("LocationServicesManager") as? NSObject.Type,
+          let shared = servicesManager.value(forKey: "shared") as? NSObject,
+          let isEnabled = shared.value(forKey: "isEnabled") as? Bool
+        {
+          print("🔍 DEBUG: Location services running status: \(isEnabled)")
+        } else {
+          print("⚠️ Could not verify location services status")
+        }
+      }
+      return
+    } catch {
+      print("⚠️ Direct call to LocationServicesManager.bootstrap failed: \(error)")
+    }
+
+    print("⚠️ Failed to initialize location services")
   }
 }
 
@@ -503,6 +520,11 @@ class AppDelegate: NSObject, UIApplicationDelegate {
       print("AppCheck configured for production")
     #endif
 
+    // Initialize Google Places SDK
+    let apiKey = "AIzaSyByie8R56wZnIj7G8jgQKGKPn3mFKRcYwM"  // Using the key from Info.plist
+    GMSPlacesClient.provideAPIKey(apiKey)
+    print("✅ Google Places SDK initialized with API key")
+
     return true
   }
 }
@@ -512,10 +534,27 @@ struct LesKitchensApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
   @StateObject private var authViewModel = AuthViewModel()
 
+  init() {
+    print("🔍 DEBUG: LesKitchensApp initializing...")
+    // Initialize location services
+    LocationPermissionDelegate.shared.requestLocationPermission()
+    print("🔍 DEBUG: Location permission request initiated")
+  }
+
   var body: some Scene {
     WindowGroup {
       ContentView()
         .environmentObject(authViewModel)
+        .onAppear {
+          print("🔍 DEBUG: ContentView appeared, checking location services status")
+          if let isEnabled = UserDefaults.standard.value(forKey: "grocery_notifications_enabled")
+            as? Bool
+          {
+            print("✅ Location services enabled: \(isEnabled)")
+          } else {
+            print("⚠️ Location services status not found in UserDefaults")
+          }
+        }
     }
   }
 }
