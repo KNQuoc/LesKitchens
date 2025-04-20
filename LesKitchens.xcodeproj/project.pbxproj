@@ -1,0 +1,710 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		F44D15B22DB21B520012C6A5 /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = F44D15B12DB21B520012C6A5 /* GooglePlaces */; };
+		F44D15B42DB21B520012C6A5 /* GooglePlacesSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */; };
+		F4A3ACF22DB4CE53007BB2CC /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F4A3ACF12DB4CE53007BB2CC /* GoogleSignIn */; };
+		F4A3ACF42DB4CE53007BB2CC /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F4A3ACF32DB4CE53007BB2CC /* GoogleSignInSwift */; };
+		F4F421732DB4493E004E15AF /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421722DB4493E004E15AF /* FirebaseAppCheck */; };
+		F4F421752DB4493E004E15AF /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421742DB4493E004E15AF /* FirebaseAuth */; };
+		F4F421772DB4493E004E15AF /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421762DB4493E004E15AF /* FirebaseAuthCombine-Community */; };
+		F4F421792DB4493E004E15AF /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421782DB4493E004E15AF /* FirebaseCore */; };
+		F4F4217B2DB4493E004E15AF /* FirebaseDatabase in Frameworks */ = {isa = PBXBuildFile; productRef = F4F4217A2DB4493E004E15AF /* FirebaseDatabase */; };
+		F4F4217D2DB4493E004E15AF /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = F4F4217C2DB4493E004E15AF /* FirebaseFirestore */; };
+		F4F4217F2DB4493E004E15AF /* FirebaseFirestoreCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = F4F4217E2DB4493E004E15AF /* FirebaseFirestoreCombine-Community */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		F4BA94B62D9C7796002664B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4BA94A02D9C7795002664B9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F4BA94A72D9C7795002664B9;
+			remoteInfo = LesKitchens;
+		};
+		F4BA94C02D9C7796002664B9 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4BA94A02D9C7795002664B9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F4BA94A72D9C7795002664B9;
+			remoteInfo = LesKitchens;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		F4BA94A82D9C7795002664B9 /* LesKitchens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LesKitchens.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		F4BA94B52D9C7796002664B9 /* LesKitchensTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LesKitchensTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F4BA94BF2D9C7796002664B9 /* LesKitchensUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LesKitchensUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F4F4216D2DB2CCD2004E15AF /* Exceptions for "LesKitchens" folder in "LesKitchens" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				"/Localized: Info.plist",
+			);
+			target = F4BA94A72D9C7795002664B9 /* LesKitchens */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		F4BA94AA2D9C7795002664B9 /* LesKitchens */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F4F4216D2DB2CCD2004E15AF /* Exceptions for "LesKitchens" folder in "LesKitchens" target */,
+			);
+			path = LesKitchens;
+			sourceTree = "<group>";
+		};
+		F4BA94B82D9C7796002664B9 /* LesKitchensTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LesKitchensTests;
+			sourceTree = "<group>";
+		};
+		F4BA94C22D9C7796002664B9 /* LesKitchensUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = LesKitchensUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		F4BA94A52D9C7795002664B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F44D15B22DB21B520012C6A5 /* GooglePlaces in Frameworks */,
+				F4F421732DB4493E004E15AF /* FirebaseAppCheck in Frameworks */,
+				F44D15B42DB21B520012C6A5 /* GooglePlacesSwift in Frameworks */,
+				F4F4217F2DB4493E004E15AF /* FirebaseFirestoreCombine-Community in Frameworks */,
+				F4F421752DB4493E004E15AF /* FirebaseAuth in Frameworks */,
+				F4A3ACF22DB4CE53007BB2CC /* GoogleSignIn in Frameworks */,
+				F4F421792DB4493E004E15AF /* FirebaseCore in Frameworks */,
+				F4F4217D2DB4493E004E15AF /* FirebaseFirestore in Frameworks */,
+				F4F4217B2DB4493E004E15AF /* FirebaseDatabase in Frameworks */,
+				F4F421772DB4493E004E15AF /* FirebaseAuthCombine-Community in Frameworks */,
+				F4A3ACF42DB4CE53007BB2CC /* GoogleSignInSwift in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4BA94B22D9C7796002664B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4BA94BC2D9C7796002664B9 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		F4BA949F2D9C7795002664B9 = {
+			isa = PBXGroup;
+			children = (
+				F4BA94AA2D9C7795002664B9 /* LesKitchens */,
+				F4BA94B82D9C7796002664B9 /* LesKitchensTests */,
+				F4BA94C22D9C7796002664B9 /* LesKitchensUITests */,
+				F4BA94A92D9C7795002664B9 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		F4BA94A92D9C7795002664B9 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F4BA94A82D9C7795002664B9 /* LesKitchens.app */,
+				F4BA94B52D9C7796002664B9 /* LesKitchensTests.xctest */,
+				F4BA94BF2D9C7796002664B9 /* LesKitchensUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		F4BA94A72D9C7795002664B9 /* LesKitchens */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F4BA94C92D9C7796002664B9 /* Build configuration list for PBXNativeTarget "LesKitchens" */;
+			buildPhases = (
+				F4BA94A42D9C7795002664B9 /* Sources */,
+				F4BA94A52D9C7795002664B9 /* Frameworks */,
+				F4BA94A62D9C7795002664B9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F4BA94AA2D9C7795002664B9 /* LesKitchens */,
+			);
+			name = LesKitchens;
+			packageProductDependencies = (
+				F44D15B12DB21B520012C6A5 /* GooglePlaces */,
+				F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */,
+				F4F421722DB4493E004E15AF /* FirebaseAppCheck */,
+				F4F421742DB4493E004E15AF /* FirebaseAuth */,
+				F4F421762DB4493E004E15AF /* FirebaseAuthCombine-Community */,
+				F4F421782DB4493E004E15AF /* FirebaseCore */,
+				F4F4217A2DB4493E004E15AF /* FirebaseDatabase */,
+				F4F4217C2DB4493E004E15AF /* FirebaseFirestore */,
+				F4F4217E2DB4493E004E15AF /* FirebaseFirestoreCombine-Community */,
+				F4A3ACF12DB4CE53007BB2CC /* GoogleSignIn */,
+				F4A3ACF32DB4CE53007BB2CC /* GoogleSignInSwift */,
+			);
+			productName = LesKitchens;
+			productReference = F4BA94A82D9C7795002664B9 /* LesKitchens.app */;
+			productType = "com.apple.product-type.application";
+		};
+		F4BA94B42D9C7796002664B9 /* LesKitchensTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F4BA94CC2D9C7796002664B9 /* Build configuration list for PBXNativeTarget "LesKitchensTests" */;
+			buildPhases = (
+				F4BA94B12D9C7796002664B9 /* Sources */,
+				F4BA94B22D9C7796002664B9 /* Frameworks */,
+				F4BA94B32D9C7796002664B9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F4BA94B72D9C7796002664B9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F4BA94B82D9C7796002664B9 /* LesKitchensTests */,
+			);
+			name = LesKitchensTests;
+			packageProductDependencies = (
+			);
+			productName = LesKitchensTests;
+			productReference = F4BA94B52D9C7796002664B9 /* LesKitchensTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		F4BA94BE2D9C7796002664B9 /* LesKitchensUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F4BA94CF2D9C7796002664B9 /* Build configuration list for PBXNativeTarget "LesKitchensUITests" */;
+			buildPhases = (
+				F4BA94BB2D9C7796002664B9 /* Sources */,
+				F4BA94BC2D9C7796002664B9 /* Frameworks */,
+				F4BA94BD2D9C7796002664B9 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F4BA94C12D9C7796002664B9 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				F4BA94C22D9C7796002664B9 /* LesKitchensUITests */,
+			);
+			name = LesKitchensUITests;
+			packageProductDependencies = (
+			);
+			productName = LesKitchensUITests;
+			productReference = F4BA94BF2D9C7796002664B9 /* LesKitchensUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		F4BA94A02D9C7795002664B9 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1630;
+				LastUpgradeCheck = 1630;
+				TargetAttributes = {
+					F4BA94A72D9C7795002664B9 = {
+						CreatedOnToolsVersion = 16.3;
+					};
+					F4BA94B42D9C7796002664B9 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = F4BA94A72D9C7795002664B9;
+					};
+					F4BA94BE2D9C7796002664B9 = {
+						CreatedOnToolsVersion = 16.3;
+						TestTargetID = F4BA94A72D9C7795002664B9;
+					};
+				};
+			};
+			buildConfigurationList = F4BA94A32D9C7795002664B9 /* Build configuration list for PBXProject "LesKitchens" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = F4BA949F2D9C7795002664B9;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */,
+				F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = F4BA94A92D9C7795002664B9 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				F4BA94A72D9C7795002664B9 /* LesKitchens */,
+				F4BA94B42D9C7796002664B9 /* LesKitchensTests */,
+				F4BA94BE2D9C7796002664B9 /* LesKitchensUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		F4BA94A62D9C7795002664B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4BA94B32D9C7796002664B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4BA94BD2D9C7796002664B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		F4BA94A42D9C7795002664B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4BA94B12D9C7796002664B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4BA94BB2D9C7796002664B9 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		F4BA94B72D9C7796002664B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F4BA94A72D9C7795002664B9 /* LesKitchens */;
+			targetProxy = F4BA94B62D9C7796002664B9 /* PBXContainerItemProxy */;
+		};
+		F4BA94C12D9C7796002664B9 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F4BA94A72D9C7795002664B9 /* LesKitchens */;
+			targetProxy = F4BA94C02D9C7796002664B9 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		F4BA94C72D9C7796002664B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		F4BA94C82D9C7796002664B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		F4BA94CA2D9C7796002664B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J8RS5LMCK3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = /Users/quocngo/Documents/GitHub/LesKitchens/LesKitchens/Base.lproj/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Kinette;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchens;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F4BA94CB2D9C7796002664B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J8RS5LMCK3;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = /Users/quocngo/Documents/GitHub/LesKitchens/LesKitchens/Base.lproj/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Kinette;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.6;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchens;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		F4BA94CD2D9C7796002664B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchensTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LesKitchens.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LesKitchens";
+			};
+			name = Debug;
+		};
+		F4BA94CE2D9C7796002664B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.4;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchensTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/LesKitchens.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/LesKitchens";
+			};
+			name = Release;
+		};
+		F4BA94D02D9C7796002664B9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchensUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = LesKitchens;
+			};
+			name = Debug;
+		};
+		F4BA94D12D9C7796002664B9 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchensUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = LesKitchens;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		F4BA94A32D9C7795002664B9 /* Build configuration list for PBXProject "LesKitchens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4BA94C72D9C7796002664B9 /* Debug */,
+				F4BA94C82D9C7796002664B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F4BA94C92D9C7796002664B9 /* Build configuration list for PBXNativeTarget "LesKitchens" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4BA94CA2D9C7796002664B9 /* Debug */,
+				F4BA94CB2D9C7796002664B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F4BA94CC2D9C7796002664B9 /* Build configuration list for PBXNativeTarget "LesKitchensTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4BA94CD2D9C7796002664B9 /* Debug */,
+				F4BA94CE2D9C7796002664B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F4BA94CF2D9C7796002664B9 /* Build configuration list for PBXNativeTarget "LesKitchensUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4BA94D02D9C7796002664B9 /* Debug */,
+				F4BA94D12D9C7796002664B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googlemaps/ios-places-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 9.4.1;
+			};
+		};
+		F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
+		F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.11.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		F44D15B12DB21B520012C6A5 /* GooglePlaces */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */;
+			productName = GooglePlaces;
+		};
+		F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */;
+			productName = GooglePlacesSwift;
+		};
+		F4A3ACF12DB4CE53007BB2CC /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		F4A3ACF32DB4CE53007BB2CC /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
+		};
+		F4F421722DB4493E004E15AF /* FirebaseAppCheck */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAppCheck;
+		};
+		F4F421742DB4493E004E15AF /* FirebaseAuth */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseAuth;
+		};
+		F4F421762DB4493E004E15AF /* FirebaseAuthCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseAuthCombine-Community";
+		};
+		F4F421782DB4493E004E15AF /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		F4F4217A2DB4493E004E15AF /* FirebaseDatabase */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseDatabase;
+		};
+		F4F4217C2DB4493E004E15AF /* FirebaseFirestore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseFirestore;
+		};
+		F4F4217E2DB4493E004E15AF /* FirebaseFirestoreCombine-Community */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = "FirebaseFirestoreCombine-Community";
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = F4BA94A02D9C7795002664B9 /* Project object */;
+}
