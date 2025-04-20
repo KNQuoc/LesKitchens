@@ -7,7 +7,10 @@
 
 import CoreLocation
 import Firebase
+import FirebaseAppCheck
+import FirebaseCore
 import GooglePlaces  // Add import for GooglePlaces
+import GoogleSignIn  // Add GoogleSignIn import
 // Explicitly import our Services collection so we can access LocationServicesManager
 // The "LesKitchens." prefix is optional depending on your module structure
 // import LesKitchens.Services
@@ -104,10 +107,19 @@ final class AppSetupHelper {
   private init() {}
 
   func initializeFirebase() {
-    // Firebase will be properly initialized once you add the SDK via Swift Package Manager
     #if canImport(Firebase)
       FirebaseApp.configure()
-      print("✅ Firebase initialized successfully")
+
+      // Configure Google Sign-In
+      guard let clientID = FirebaseApp.app()?.options.clientID else {
+        print("⚠️ Firebase client ID not found")
+        return
+      }
+
+      let config = GIDConfiguration(clientID: clientID)
+      GIDSignIn.sharedInstance.configuration = config
+
+      print("✅ Firebase and Google Sign-In initialized successfully")
     #else
       print("⚠️ Firebase SDK not available - add via Swift Package Manager")
     #endif
@@ -463,48 +475,47 @@ class LocationServicesBridge {
     print("⚠️ Failed to find or call LocationServicesManager.bootstrap via runtime bridge")
     */
   }
+}
 
-  @main
-  struct LesKitchensApp: App {
-    @StateObject var authViewModel = AuthViewModel()
+class AppDelegate: NSObject, UIApplicationDelegate {
+  func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
+  ) -> Bool {
+    // Configure Firebase
+    FirebaseApp.configure()
 
-    init() {
-      // Initialize Firebase and location services using the helper class
-      AppSetupHelper.shared.initializeFirebase()
+    // Configure AppCheck
+    #if DEBUG
+      #if targetEnvironment(simulator)
+        // Running in Simulator - use debug provider
+        let debugProvider = AppCheckDebugProviderFactory()
+        AppCheck.setAppCheckProviderFactory(debugProvider)
+        print("AppCheck configured with debug provider for Simulator")
+      #else
+        // Running on device in debug mode - still use debug provider
+        let debugProvider = AppCheckDebugProviderFactory()
+        AppCheck.setAppCheckProviderFactory(debugProvider)
+        print("AppCheck configured with debug provider for debug build")
+      #endif
+    #else
+      // Production - use default provider
+      print("AppCheck configured for production")
+    #endif
 
-      // Initialize Google Places SDK
-      if let apiKey = getGooglePlacesAPIKeyFromPlist() {
-        print("🔍 DEBUG: Initializing Google Places SDK with API Key")
-        GMSPlacesClient.provideAPIKey(apiKey)
-      } else {
-        print("⚠️ WARNING: Google Places API Key not found in Info.plist")
-      }
+    return true
+  }
+}
 
-      // Initialize location services
-      AppSetupHelper.shared.initializeLocationServices()
-    }
+@main
+struct LesKitchensApp: App {
+  @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+  @StateObject private var authViewModel = AuthViewModel()
 
-    // Helper function to retrieve API key from Info.plist
-    private func getGooglePlacesAPIKeyFromPlist() -> String? {
-      guard let path = Bundle.main.path(forResource: "LesKitchens-Info", ofType: "plist"),
-        let dict = NSDictionary(contentsOfFile: path) as? [String: AnyObject]
-      else {
-        print("⚠️ LesKitchens-Info.plist not found or could not be parsed")
-        return nil
-      }
-      return dict["GooglePlacesAPIKey"] as? String
-    }
-
-    var body: some Scene {
-      WindowGroup {
-        if authViewModel.userSession != nil {
-          ContentView()
-            .environmentObject(authViewModel)
-        } else {
-          LoginView()
-            .environmentObject(authViewModel)
-        }
-      }
+  var body: some Scene {
+    WindowGroup {
+      ContentView()
+        .environmentObject(authViewModel)
     }
   }
 }

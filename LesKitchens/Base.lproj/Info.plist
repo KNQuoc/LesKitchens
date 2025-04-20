@@ -2,6 +2,20 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+    <!-- Google Sign-In Configuration -->
+    <key>GIDClientID</key>
+    <string>1078544197368-2e99ophotsbefvv95o2jfvvvqd7rmhgj.apps.googleusercontent.com</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>com.googleusercontent.apps.1078544197368-2e99ophotsbefvv95o2jfvvvqd7rmhgj</string>
+            </array>
+        </dict>
+    </array>
+    
+    <!-- Location Usage Descriptions -->
     <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
     <string>We need your location to notify you when you are near a grocery store.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
@@ -9,6 +23,12 @@
     <key>NSLocationAlwaysUsageDescription</key>
     <string>We need your location to notify you when you are near a grocery store, even when the app is in the background.</string>
     
+    <!-- Google Places API Key -->
+    <key>GooglePlacesAPIKey</key>
+    <string>AIzaSyByie8R56wZnIj7G8jgQKGKPn3mFKRcYwM</string>
+    
+    <!-- Background Modes are typically set in project capabilities -->
+    <!-- Uncomment this if you cannot enable it through Xcode -->
     <key>UIBackgroundModes</key>
     <array>
         <string>location</string>

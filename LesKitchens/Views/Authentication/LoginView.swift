@@ -1,3 +1,4 @@
+import GoogleSignInSwift
 import SwiftUI
 
 struct LoginView: View {
@@ -68,6 +69,26 @@ struct LoginView: View {
                             email.isEmpty || password.isEmpty || authViewModel.isAuthenticating
                                 ? 0.6 : 1)
 
+                        // Divider with "or" text
+                        HStack {
+                            VStack { Divider() }.padding(.horizontal, 8)
+                            Text("or")
+                                .foregroundColor(.gray)
+                                .font(.subheadline)
+                            VStack { Divider() }.padding(.horizontal, 8)
+                        }
+                        .padding(.vertical, 8)
+
+                        // Google Sign-In button
+                        GoogleSignInButton(action: {
+                            Task {
+                                await authViewModel.signInWithGoogle()
+                            }
+                        })
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .cornerRadius(8)
+                        .padding(.horizontal, 0)
+
                         // Register navigation
                         Button(action: {
                             showRegistration = true
@@ -89,4 +110,9 @@ struct LoginView: View {
             }
         }
     }
+}
+
+#Preview {
+    LoginView()
+        .environmentObject(AuthViewModel())
 }

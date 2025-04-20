@@ -1,24 +1,47 @@
 import Firebase
 import FirebaseAuth
 import Foundation
+import GoogleSignIn
+import GoogleSignInSwift
 import SwiftUI
 
 class AuthViewModel: ObservableObject {
-    @Published var userSession: String?
+    @Published var userSession: FirebaseAuth.User?
     @Published var isAuthenticating = false
     @Published var error: String?
     @Published var isLoading = false
+    @Published var userEmail: String = ""
+    @Published var isAuthenticated: Bool = false
+    private var handle: AuthStateDidChangeListenerHandle?
 
     init() {
-        // Check if user is logged in
-        self.userSession = UserDefaults.standard.string(forKey: "user_session")
+        // Check if user is already logged in
+        self.userSession = Auth.auth().currentUser
+        self.userEmail = Auth.auth().currentUser?.email ?? ""
+        self.isAuthenticated = Auth.auth().currentUser != nil
 
-        // Check if Firebase Auth already has a user
-        if userSession == nil, let currentUser = Auth.auth().currentUser {
-            // If Firebase has a user but our UserDefaults doesn't, update it
-            userSession = currentUser.uid
-            UserDefaults.standard.set(currentUser.uid, forKey: "user_session")
-            print("Restored user session from Firebase Auth")
+        // Listen for auth state changes
+        handle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            DispatchQueue.main.async {
+                self?.userSession = user
+                self?.userEmail = user?.email ?? ""
+                self?.isAuthenticated = user != nil
+            }
+        }
+
+        #if DEBUG
+            // For preview purposes only
+            if ProcessInfo.processInfo.environment["XCODE_RUNNING_FOR_PREVIEWS"] == "1" {
+                // Provide mock data for previews
+                self.userEmail = "user@example.com"
+                self.isAuthenticated = true
+            }
+        #endif
+    }
+
+    deinit {
+        if let handle = handle {
+            Auth.auth().removeStateDidChangeListener(handle)
         }
     }
 
@@ -27,29 +50,24 @@ class AuthViewModel: ObservableObject {
         error = nil
         isLoading = true
 
-        Auth.auth().signIn(withEmail: email, password: password) { result, error in
+        Auth.auth().signIn(withEmail: email, password: password) { [weak self] result, error in
+            guard let self = self else { return }
+
             DispatchQueue.main.async {
                 self.isAuthenticating = false
                 self.isLoading = false
 
                 if let error = error {
                     self.error = error.localizedDescription
-                    print("Login error: \(error.localizedDescription)")
+                    print("Error signing in: \(error.localizedDescription)")
                     return
                 }
 
-                guard let user = result?.user else {
-                    self.error = "Unknown error occurred"
-                    return
-                }
-
-                // Save user info to UserDefaults
-                UserDefaults.standard.set(user.uid, forKey: "user_session")
-                UserDefaults.standard.set(user.displayName ?? "", forKey: "user_displayname")
-                UserDefaults.standard.set(user.email ?? "", forKey: "user_email")
-
-                self.userSession = user.uid
-                print("User logged in successfully: \(user.uid)")
+                // Successfully signed in
+                self.userSession = result?.user
+                self.userEmail = result?.user.email ?? ""
+                self.isAuthenticated = true
+                print("User login successful")
             }
         }
     }
@@ -59,14 +77,16 @@ class AuthViewModel: ObservableObject {
         error = nil
         isLoading = true
 
-        Auth.auth().createUser(withEmail: email, password: password) { result, error in
+        Auth.auth().createUser(withEmail: email, password: password) { [weak self] result, error in
+            guard let self = self else { return }
+
             DispatchQueue.main.async {
                 self.isAuthenticating = false
                 self.isLoading = false
 
                 if let error = error {
                     self.error = error.localizedDescription
-                    print("Registration error: \(error.localizedDescription)")
+                    print("Error creating user: \(error.localizedDescription)")
                     return
                 }
 
@@ -75,57 +95,140 @@ class AuthViewModel: ObservableObject {
                     return
                 }
 
-                // Create user profile
+                // Set display name
                 let changeRequest = user.createProfileChangeRequest()
                 changeRequest.displayName = username
                 changeRequest.commitChanges { error in
                     if let error = error {
-                        print("Failed to set display name: \(error.localizedDescription)")
-                    } else {
-                        print("Display name set successfully: \(username)")
+                        print("Error updating user profile: \(error.localizedDescription)")
                     }
                 }
 
-                // Save user info to UserDefaults
-                UserDefaults.standard.set(user.uid, forKey: "user_session")
-                UserDefaults.standard.set(username, forKey: "user_displayname")
-                UserDefaults.standard.set(email, forKey: "user_email")
+                // Set up user in Firestore
+                self.setupUserInDatabase(user: user, username: username)
 
-                self.userSession = user.uid
-                print("User registered successfully: \(user.uid)")
+                // Successfully registered
+                self.userSession = user
+                self.userEmail = user.email ?? ""
+                self.isAuthenticated = true
+                print("User registration successful")
             }
         }
     }
 
+    private func setupUserInDatabase(user: FirebaseAuth.User, username: String) {
+        let db = Firestore.firestore()
+
+        // Create user profile document
+        let userData: [String: Any] = [
+            "userId": user.uid,
+            "email": user.email ?? "",
+            "displayName": username,
+            "username": username.lowercased().replacingOccurrences(of: " ", with: ""),
+            "createdAt": FieldValue.serverTimestamp(),
+        ]
+
+        db.collection("users").document(user.uid).collection("profile").document("userProfile")
+            .setData(userData) { [weak self] error in
+                DispatchQueue.main.async {
+                    if let error = error {
+                        self?.error = error.localizedDescription
+                        print("Error setting up user in database: \(error.localizedDescription)")
+                    } else {
+                        print("User profile created successfully in Firestore")
+                    }
+                }
+            }
+    }
+
     func signOut() {
         do {
-            // Sign out from Firebase
             try Auth.auth().signOut()
 
-            // Clear user session
-            UserDefaults.standard.removeObject(forKey: "user_session")
-            UserDefaults.standard.removeObject(forKey: "user_displayname")
-            UserDefaults.standard.removeObject(forKey: "user_email")
-            self.userSession = nil
-
-            print("User signed out successfully")
+            DispatchQueue.main.async {
+                self.userSession = nil
+                self.userEmail = ""
+                self.isAuthenticated = false
+                print("User signed out successfully")
+            }
         } catch let error {
+            self.error = error.localizedDescription
             print("Error signing out: \(error.localizedDescription)")
         }
     }
 
-    func signIn(email: String, password: String) {
-        isLoading = true
+    func resetPassword(withEmail email: String, completion: @escaping (Bool, String?) -> Void) {
+        Auth.auth().sendPasswordReset(withEmail: email) { error in
+            if let error = error {
+                completion(false, error.localizedDescription)
+            } else {
+                completion(true, nil)
+            }
+        }
+    }
 
-        // Simulate sign in process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            // Save user session and info
-            UserDefaults.standard.set("user-123", forKey: "user_session")
-            UserDefaults.standard.set("John Doe", forKey: "user_displayname")
-            UserDefaults.standard.set(email, forKey: "user_email")
+    func signInWithGoogle() async {
+        await MainActor.run {
+            isLoading = true
+            error = nil
+        }
 
-            self.userSession = "user-123"
-            self.isLoading = false
+        do {
+            guard let clientID = FirebaseApp.app()?.options.clientID else {
+                throw NSError(
+                    domain: "", code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "Client ID not found"])
+            }
+
+            let config = GIDConfiguration(clientID: clientID)
+            GIDSignIn.sharedInstance.configuration = config
+
+            let scenes = await MainActor.run { UIApplication.shared.connectedScenes.first }
+            guard let windowScene = scenes as? UIWindowScene,
+                let window = windowScene.windows.first,
+                let rootViewController = window.rootViewController
+            else {
+                throw NSError(
+                    domain: "", code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "No root view controller found"])
+            }
+
+            let result = try await GIDSignIn.sharedInstance.signIn(
+                withPresenting: rootViewController)
+            let user = result.user
+            guard let idToken = user.idToken?.tokenString else {
+                throw NSError(
+                    domain: "", code: -1,
+                    userInfo: [NSLocalizedDescriptionKey: "ID token not found"])
+            }
+
+            let credential = GoogleAuthProvider.credential(
+                withIDToken: idToken,
+                accessToken: user.accessToken.tokenString
+            )
+
+            let authResult = try await Auth.auth().signIn(with: credential)
+            await MainActor.run {
+                self.userSession = authResult.user
+                self.userEmail = authResult.user.email ?? ""
+                self.isAuthenticated = true
+                self.isLoading = false
+            }
+
+            // Set up user in database
+            await MainActor.run {
+                setupUserInDatabase(
+                    user: authResult.user,
+                    username: user.profile?.name ?? "User"
+                )
+            }
+
+        } catch {
+            await MainActor.run {
+                self.error = error.localizedDescription
+                self.isLoading = false
+                print("Error signing in with Google: \(error.localizedDescription)")
+            }
         }
     }
 }

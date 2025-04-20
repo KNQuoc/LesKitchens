@@ -80,10 +80,81 @@ public class LocationServicesManager {
 
     // MARK: - Public API
 
+    /// Send a notification when app launches
+    private static func sendLaunchNotification() {
+        print("🔔 Attempting to send launch notification...")
+
+        // First check notification authorization status
+        UNUserNotificationCenter.current().getNotificationSettings { settings in
+            print("🔔 Current notification settings: \(settings.authorizationStatus.rawValue)")
+
+            guard settings.authorizationStatus == .authorized else {
+                print(
+                    "⚠️ Notifications not authorized. Current status: \(settings.authorizationStatus.rawValue)"
+                )
+                // Request authorization if not determined yet
+                if settings.authorizationStatus == .notDetermined {
+                    print("🔔 Requesting notification authorization...")
+                    UNUserNotificationCenter.current().requestAuthorization(options: [
+                        .alert, .sound, .badge,
+                    ]) { granted, error in
+                        if granted {
+                            print("✅ Notification permission granted, sending notification...")
+                            sendNotificationContent()
+                        } else {
+                            print(
+                                "❌ Notification permission denied: \(error?.localizedDescription ?? "No error details")"
+                            )
+                        }
+                    }
+                }
+                return
+            }
+
+            // If authorized, send the notification
+            sendNotificationContent()
+        }
+    }
+
+    /// Helper method to create and send the actual notification content
+    private static func sendNotificationContent() {
+        print("🔔 Creating notification content...")
+        let content = UNMutableNotificationContent()
+        content.title = "Location Tracking Enabled!"
+        content.body = "Tracking your location for nearby grocery stores."
+        content.sound = UNNotificationSound.default
+
+        // Create trigger (1 second delay to ensure app is fully launched)
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+
+        // Create request with unique identifier
+        let request = UNNotificationRequest(
+            identifier: "app-launch-\(UUID().uuidString)",
+            content: content,
+            trigger: trigger
+        )
+
+        print("🔔 Scheduling notification...")
+        // Schedule notification
+        UNUserNotificationCenter.current().add(request) { error in
+            if let error = error {
+                print("❌ Error sending launch notification: \(error.localizedDescription)")
+            } else {
+                print("✅ Launch notification scheduled successfully")
+            }
+        }
+    }
+
     /// Bootstrap method for initializing location services from app startup
     /// Handles delayed start and adds verbose logging
     public static func bootstrap() {
         print("🔍 DEBUG: LocationServicesManager - Bootstrapping location services...")
+
+        // Send launch notification with a slight delay to ensure proper initialization
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            print("🔔 Triggering launch notification...")
+            sendLaunchNotification()
+        }
 
         // Add debug to verify the class is accessible
         print(

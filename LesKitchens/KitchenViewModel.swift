@@ -5,6 +5,12 @@ import FirebaseFirestore
 import Foundation
 import SwiftUI
 
+// Alert Item for displaying errors
+struct AlertItem: Identifiable {
+    var id = UUID()
+    var message: String
+}
+
 // Models
 struct ShoppingItem: Identifiable, Codable {
     var id: String
@@ -17,6 +23,11 @@ struct ShoppingItem: Identifiable, Codable {
         self.name = name
         self.quantity = quantity
         self.groupItem = groupItem
+    }
+
+    var unitDisplay: String {
+        // Retrieve unit from GroceryDatabase based on item name
+        return GroceryDatabase.shared.getUnitForItem(name)
     }
 }
 
@@ -38,6 +49,11 @@ struct InventoryItem: Identifiable, Codable {
         self.expirationDate = expirationDate
         self.inventoryId = inventoryId
         self.status = status
+    }
+
+    var unitDisplay: String {
+        // Retrieve unit from GroceryDatabase based on item name
+        return GroceryDatabase.shared.getUnitForItem(name)
     }
 }
 
@@ -98,19 +114,19 @@ class KitchenViewModel: ObservableObject {
     @Published var selectedTab = 0
     @Published var isLoading = false
     @Published var errorMessage: String?
+    @Published var userSession: User?
 
-    private var db = Firestore.firestore()
+    private var db: Firestore?
 
     init() {
+        // Initialize Firestore
+        db = Firestore.firestore()
+
         // Check if user is logged in before loading data
         if let currentUser = Auth.auth().currentUser {
+            userSession = currentUser
             loadUserData(userId: currentUser.uid)
         }
-
-        // BEFORE FirebaseApp.configure()
-        let providerFactory = AppCheckDebugProviderFactory()
-        AppCheck.setAppCheckProviderFactory(providerFactory)
-
     }
 
     // MARK: - Data Loading
@@ -159,9 +175,13 @@ class KitchenViewModel: ObservableObject {
     // MARK: - Profile Methods
 
     func loadProfile(userId: String, completion: @escaping (Bool) -> Void) {
+        guard let db = db else {
+            completion(false)
+            return
+        }
+
         db.collection("users").document(userId).collection("profile").document("userProfile")
-            .getDocument {
-                [weak self] (snapshot: DocumentSnapshot?, error: Error?) in
+            .getDocument { [weak self] snapshot, error in
                 guard let self = self else { return }
 
                 if let error = error {
@@ -197,6 +217,11 @@ class KitchenViewModel: ObservableObject {
     // MARK: - Shopping Items Methods
 
     func loadShoppingItems(userId: String, completion: @escaping (Bool) -> Void) {
+        guard let db = db else {
+            completion(false)
+            return
+        }
+
         db.collection("users").document(userId).collection("shopping").getDocuments {
             [weak self] snapshot, error in
             guard let self = self else { return }
@@ -215,12 +240,16 @@ class KitchenViewModel: ObservableObject {
             let items = documents.compactMap { document -> ShoppingItem? in
                 let data = document.data()
 
-                return ShoppingItem(
+                // Create the shopping item
+                let item = ShoppingItem(
                     id: document.documentID,
                     name: data["name"] as? String ?? "",
                     quantity: data["quantity"] as? Int ?? 1,
                     groupItem: data["groupItem"] as? Bool ?? false
                 )
+
+                // If there's no unit in Firebase, it will use the one from GroceryDatabase
+                return item
             }
 
             DispatchQueue.main.async {
@@ -231,9 +260,10 @@ class KitchenViewModel: ObservableObject {
     }
 
     func addShoppingItem(name: String, quantity: Int, groupItem: Bool = false) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = userSession?.uid else { return }
 
         let newItem = ShoppingItem(name: name, quantity: quantity, groupItem: groupItem)
+        let unit = GroceryDatabase.shared.getUnitForItem(name)
 
         // Include all fields with default values for empty/null fields
         let data: [String: Any] = [
@@ -241,7 +271,10 @@ class KitchenViewModel: ObservableObject {
             "name": newItem.name,
             "quantity": newItem.quantity,
             "groupItem": newItem.groupItem,
+            "unit": unit,  // Add unit to Firebase document
         ]
+
+        guard let db = db else { return }
 
         db.collection("users").document(userId).collection("shopping").document(newItem.id).setData(
             data
@@ -258,7 +291,9 @@ class KitchenViewModel: ObservableObject {
     }
 
     func deleteShoppingItem(id: String) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = userSession?.uid else { return }
+
+        guard let db = db else { return }
 
         db.collection("users").document(userId).collection("shopping").document(id).delete {
             [weak self] error in
@@ -276,6 +311,11 @@ class KitchenViewModel: ObservableObject {
     // MARK: - Inventory Methods
 
     func loadInventoryItems(userId: String, completion: @escaping (Bool) -> Void) {
+        guard let db = db else {
+            completion(false)
+            return
+        }
+
         db.collection("users").document(userId).collection("inventory").getDocuments {
             [weak self] snapshot, error in
             guard let self = self else { return }
@@ -299,7 +339,8 @@ class KitchenViewModel: ObservableObject {
                     expirationDate = expirationTimestamp.dateValue()
                 }
 
-                return InventoryItem(
+                // Create the inventory item
+                let item = InventoryItem(
                     id: document.documentID,
                     name: data["name"] as? String ?? "",
                     quantity: data["quantity"] as? Int ?? 1,
@@ -307,6 +348,9 @@ class KitchenViewModel: ObservableObject {
                     inventoryId: data["inventoryId"] as? String,
                     status: data["status"] as? String ?? "active"
                 )
+
+                // If there's no unit in Firebase, it will use the one from GroceryDatabase
+                return item
             }
 
             DispatchQueue.main.async {
@@ -319,7 +363,7 @@ class KitchenViewModel: ObservableObject {
     func addInventoryItem(
         name: String, quantity: Int, expirationDate: Date? = nil, inventoryId: String? = nil
     ) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = userSession?.uid else { return }
 
         let newItem = InventoryItem(
             name: name,
@@ -328,6 +372,7 @@ class KitchenViewModel: ObservableObject {
             inventoryId: inventoryId,
             status: "NORMAL"
         )
+        let unit = GroceryDatabase.shared.getUnitForItem(name)
 
         // Create data dictionary without the optional fields first
         var data: [String: Any] = [
@@ -335,6 +380,7 @@ class KitchenViewModel: ObservableObject {
             "name": newItem.name,
             "quantity": newItem.quantity,
             "status": newItem.status,
+            "unit": unit,  // Add unit to Firebase document
         ]
 
         // Handle optional fields properly
@@ -349,6 +395,8 @@ class KitchenViewModel: ObservableObject {
         } else {
             data["inventoryId"] = NSNull()  // Explicit null for missing inventory ID
         }
+
+        guard let db = db else { return }
 
         db.collection("users").document(userId).collection("inventory").document(newItem.id)
             .setData(data) { [weak self] error in
@@ -365,7 +413,9 @@ class KitchenViewModel: ObservableObject {
     }
 
     func deleteInventoryItem(id: String) {
-        guard let userId = Auth.auth().currentUser?.uid else { return }
+        guard let userId = userSession?.uid else { return }
+
+        guard let db = db else { return }
 
         db.collection("users").document(userId).collection("inventory").document(id).delete {
             [weak self] error in
@@ -381,9 +431,37 @@ class KitchenViewModel: ObservableObject {
         }
     }
 
+    func updateInventoryItemStatus(id: String, status: String) {
+        guard let userId = userSession?.uid else { return }
+
+        // First update local state
+        DispatchQueue.main.async {
+            if let index = self.inventoryItems.firstIndex(where: { $0.id == id }) {
+                self.inventoryItems[index].status = status
+            }
+        }
+
+        // Then update in Firestore
+        guard let db = db else { return }
+
+        db.collection("users").document(userId).collection("inventory").document(id)
+            .updateData(["status": status]) { [weak self] error in
+                if let error = error {
+                    self?.errorMessage =
+                        "Failed to update item status: \(error.localizedDescription)"
+                    return
+                }
+            }
+    }
+
     // MARK: - Groups Methods
 
     func loadGroups(userId: String, completion: @escaping (Bool) -> Void) {
+        guard let db = db else {
+            completion(false)
+            return
+        }
+
         db.collection("users").document(userId).collection("groups").getDocuments {
             [weak self] snapshot, error in
             guard let self = self else { return }
@@ -417,9 +495,56 @@ class KitchenViewModel: ObservableObject {
         }
     }
 
+    func createGroup(name: String) {
+        guard let userId = userSession?.uid else { return }
+
+        let newGroup = Group(name: name, memberCount: 1, owner: true)
+
+        let data: [String: Any] = [
+            "id": newGroup.id,
+            "name": newGroup.name,
+            "memberCount": newGroup.memberCount,
+            "owner": newGroup.owner,
+            "createdAt": FieldValue.serverTimestamp(),
+        ]
+
+        // Show loading indicator
+        isLoading = true
+
+        guard let db = db else { return }
+
+        db.collection("users").document(userId).collection("groups").document(newGroup.id)
+            .setData(data) { [weak self] error in
+                guard let self = self else { return }
+
+                self.isLoading = false
+
+                if let error = error {
+                    self.errorMessage = "Failed to create group: \(error.localizedDescription)"
+                    return
+                }
+
+                // Create a default inventory for the new group
+                self.createGroupInventory(
+                    groupId: newGroup.id,
+                    name: "\(newGroup.name) Kitchen",
+                    groupName: newGroup.name
+                )
+
+                DispatchQueue.main.async {
+                    self.groups.append(newGroup)
+                }
+            }
+    }
+
     // MARK: - Group Inventories Methods
 
     func loadGroupInventories(userId: String, completion: @escaping (Bool) -> Void) {
+        guard let db = db else {
+            completion(false)
+            return
+        }
+
         db.collection("users").document(userId).collection("groupInventories").getDocuments {
             [weak self] snapshot, error in
             guard let self = self else { return }
@@ -454,6 +579,82 @@ class KitchenViewModel: ObservableObject {
         }
     }
 
+    func createGroupInventory(groupId: String, name: String, groupName: String) {
+        guard let userId = userSession?.uid else { return }
+
+        let newInventory = GroupInventory(groupId: groupId, name: name, groupName: groupName)
+
+        let data: [String: Any] = [
+            "id": newInventory.id,
+            "groupId": newInventory.groupId,
+            "name": newInventory.name,
+            "groupName": newInventory.groupName,
+            "createdAt": FieldValue.serverTimestamp(),
+        ]
+
+        guard let db = db else { return }
+
+        db.collection("users").document(userId).collection("groupInventories").document(
+            newInventory.id
+        )
+        .setData(data) { [weak self] error in
+            if let error = error {
+                self?.errorMessage =
+                    "Failed to create group inventory: \(error.localizedDescription)"
+                return
+            }
+
+            DispatchQueue.main.async {
+                self?.groupInventories.append(newInventory)
+            }
+        }
+    }
+
+    func deleteGroupInventory(id: String) {
+        guard let userId = userSession?.uid else { return }
+        guard let db = self.db else { return }
+
+        // First remove all inventory items that belong to this group inventory
+        db.collection("users").document(userId).collection("inventory")
+            .whereField("inventoryId", isEqualTo: id)
+            .getDocuments { [weak self] snapshot, error in
+                guard let self = self else { return }
+
+                if let error = error {
+                    self.errorMessage =
+                        "Failed to find inventory items: \(error.localizedDescription)"
+                    return
+                }
+
+                let batch = db.batch()
+
+                snapshot?.documents.forEach { document in
+                    batch.deleteDocument(
+                        db.collection("users").document(userId).collection("inventory")
+                            .document(document.documentID))
+                }
+
+                // Then delete the group inventory
+                batch.deleteDocument(
+                    db.collection("users").document(userId).collection("groupInventories")
+                        .document(id))
+
+                batch.commit { error in
+                    if let error = error {
+                        self.errorMessage =
+                            "Failed to delete group inventory: \(error.localizedDescription)"
+                        return
+                    }
+
+                    DispatchQueue.main.async {
+                        // Remove items from memory
+                        self.inventoryItems.removeAll { $0.inventoryId == id }
+                        self.groupInventories.removeAll { $0.id == id }
+                    }
+                }
+            }
+    }
+
     // MARK: - Move Item Methods
 
     func moveToInventory(
@@ -469,3 +670,5 @@ class KitchenViewModel: ObservableObject {
         deleteShoppingItem(id: shoppingItem.id)
     }
 }
+
+// End of file

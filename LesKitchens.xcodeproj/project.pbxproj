@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		F44D15B22DB21B520012C6A5 /* GooglePlaces in Frameworks */ = {isa = PBXBuildFile; productRef = F44D15B12DB21B520012C6A5 /* GooglePlaces */; };
 		F44D15B42DB21B520012C6A5 /* GooglePlacesSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */; };
+		F4A3ACF22DB4CE53007BB2CC /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F4A3ACF12DB4CE53007BB2CC /* GoogleSignIn */; };
+		F4A3ACF42DB4CE53007BB2CC /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F4A3ACF32DB4CE53007BB2CC /* GoogleSignInSwift */; };
 		F4F421732DB4493E004E15AF /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421722DB4493E004E15AF /* FirebaseAppCheck */; };
 		F4F421752DB4493E004E15AF /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421742DB4493E004E15AF /* FirebaseAuth */; };
 		F4F421772DB4493E004E15AF /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421762DB4493E004E15AF /* FirebaseAuthCombine-Community */; };
@@ -82,10 +84,12 @@
 				F44D15B42DB21B520012C6A5 /* GooglePlacesSwift in Frameworks */,
 				F4F4217F2DB4493E004E15AF /* FirebaseFirestoreCombine-Community in Frameworks */,
 				F4F421752DB4493E004E15AF /* FirebaseAuth in Frameworks */,
+				F4A3ACF22DB4CE53007BB2CC /* GoogleSignIn in Frameworks */,
 				F4F421792DB4493E004E15AF /* FirebaseCore in Frameworks */,
 				F4F4217D2DB4493E004E15AF /* FirebaseFirestore in Frameworks */,
 				F4F4217B2DB4493E004E15AF /* FirebaseDatabase in Frameworks */,
 				F4F421772DB4493E004E15AF /* FirebaseAuthCombine-Community in Frameworks */,
+				F4A3ACF42DB4CE53007BB2CC /* GoogleSignInSwift in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -155,6 +159,8 @@
 				F4F4217A2DB4493E004E15AF /* FirebaseDatabase */,
 				F4F4217C2DB4493E004E15AF /* FirebaseFirestore */,
 				F4F4217E2DB4493E004E15AF /* FirebaseFirestoreCombine-Community */,
+				F4A3ACF12DB4CE53007BB2CC /* GoogleSignIn */,
+				F4A3ACF32DB4CE53007BB2CC /* GoogleSignInSwift */,
 			);
 			productName = LesKitchens;
 			productReference = F4BA94A82D9C7795002664B9 /* LesKitchens.app */;
@@ -241,6 +247,7 @@
 			packageReferences = (
 				F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */,
 				F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = F4BA94A92D9C7795002664B9 /* Products */;
@@ -440,12 +447,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J8RS5LMCK3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = /Users/quocngo/Documents/GitHub/LesKitchens/LesKitchens/Base.lproj/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Kinette;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -458,6 +468,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchens;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -469,12 +480,15 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = J8RS5LMCK3;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = /Users/quocngo/Documents/GitHub/LesKitchens/LesKitchens/Base.lproj/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = Kinette;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.shopping";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -487,6 +501,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchens;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -611,6 +626,14 @@
 				minimumVersion = 9.4.1;
 			};
 		};
+		F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 8.0.0;
+			};
+		};
 		F4F421712DB4493E004E15AF /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -631,6 +654,16 @@
 			isa = XCSwiftPackageProductDependency;
 			package = F44D15B02DB21B520012C6A5 /* XCRemoteSwiftPackageReference "ios-places-sdk" */;
 			productName = GooglePlacesSwift;
+		};
+		F4A3ACF12DB4CE53007BB2CC /* GoogleSignIn */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignIn;
+		};
+		F4A3ACF32DB4CE53007BB2CC /* GoogleSignInSwift */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = F4A3ACF02DB4CE53007BB2CC /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
+			productName = GoogleSignInSwift;
 		};
 		F4F421722DB4493E004E15AF /* FirebaseAppCheck */ = {
 			isa = XCSwiftPackageProductDependency;

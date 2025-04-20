@@ -9,82 +9,37 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                Color("BackgroundColor")
-                    .ignoresSafeArea()
+                Color("BackgroundColor").ignoresSafeArea()
 
-                VStack(alignment: .leading, spacing: 20) {
-                    // User info section
-                    VStack(alignment: .center) {
-                        Image(systemName: "person.circle.fill")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 100, height: 100)
-                            .foregroundColor(Color("ActionColor"))
-                            .padding(.top, 30)
+                VStack(spacing: 20) {
+                    Image(systemName: "person.circle.fill")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 100, height: 100)
+                        .foregroundColor(Color("ActionColor"))
+                        .padding(.top, 50)
 
-                        Text(userDisplayName)
-                            .font(.title)
-                            .fontWeight(.bold)
+                    Text(authViewModel.userEmail)
+                        .font(.headline)
 
-                        Text(userEmail)
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
+                    Button(action: {
+                        authViewModel.signOut()
+                    }) {
+                        Text("Sign Out")
+                            .foregroundColor(.white)
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color("ActionColor"))
+                            .cornerRadius(10)
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.bottom, 30)
+                    .padding(.horizontal, 50)
+                    .padding(.top, 30)
 
-                    // Settings list
-                    List {
-                        Section(header: Text("Notifications")) {
-                            Toggle(isOn: $groceryNotificationsEnabled) {
-                                HStack {
-                                    Image(systemName: "bell.badge")
-                                        .foregroundColor(Color("ActionColor"))
-                                    Text("Grocery Store Notifications")
-                                }
-                            }
-                            .onChange(of: groceryNotificationsEnabled) {
-                                toggleLocationServices(enabled: groceryNotificationsEnabled)
-                            }
-                        }
-
-                        Section(header: Text("Account")) {
-                            Button(action: {
-                                authViewModel.signOut()
-                            }) {
-                                HStack {
-                                    Image(systemName: "arrow.right.square")
-                                        .foregroundColor(.red)
-                                    Text("Sign Out")
-                                        .foregroundColor(.red)
-                                }
-                            }
-                        }
-
-                        Section(header: Text("App Info")) {
-                            HStack {
-                                Image(systemName: "info.circle")
-                                    .foregroundColor(Color("ActionColor"))
-                                Text("Version 1.0")
-                                Spacer()
-                            }
-
-                            HStack {
-                                Image(systemName: "envelope")
-                                    .foregroundColor(Color("ActionColor"))
-                                Text("Contact Support")
-                                Spacer()
-                            }
-                        }
-                    }
-                    .listStyle(.insetGrouped)
-                    .background(Color.clear)
+                    Spacer()
                 }
+                .padding()
             }
-            .navigationTitle("User Profile")
-            .onAppear {
-                checkLocationServicesStatus()
-            }
+            .navigationTitle("Profile")
         }
     }
 
@@ -153,5 +108,12 @@ struct ProfileView: View {
                 }
             }
         #endif
+    }
+}
+
+struct ProfileView_Previews: PreviewProvider {
+    static var previews: some View {
+        ProfileView()
+            .environmentObject(AuthViewModel())
     }
 }
