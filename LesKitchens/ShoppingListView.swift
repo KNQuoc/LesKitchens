@@ -54,9 +54,11 @@ struct ShoppingListView: View {
     // Empty state view
     private func emptyStateView() -> some View {
         VStack(spacing: 20) {
-            Image(systemName: "cart")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
+            Image("Kinette")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+                .padding(.bottom, 10)
 
             Text("Your shopping list is empty")
                 .font(.headline)
@@ -85,8 +87,8 @@ struct ShoppingListView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Only use green background for the entire screen
-                Color(red: 0.5, green: 0.7, blue: 0.5)
+                // Use color asset that respects dark mode
+                Color("BackgroundColor")
                     .ignoresSafeArea()
 
                 if viewModel.isLoading {
@@ -97,13 +99,13 @@ struct ShoppingListView: View {
                 } else {
                     ScrollView {
                         VStack(spacing: 10) {
-                            // Add custom search bar with white background
+                            // Add custom search bar with background that respects dark mode
                             HStack {
                                 Image(systemName: "magnifyingglass")
                                     .foregroundColor(.gray)
 
                                 TextField("Search", text: $searchText)
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                                     .onChange(of: searchText) { oldValue, newValue in
                                         filterItems(searchText: newValue)
                                     }
@@ -118,7 +120,7 @@ struct ShoppingListView: View {
                                 }
                             }
                             .padding(8)
-                            .background(Color.white)
+                            .background(Color("CardColor"))
                             .cornerRadius(10)
                             .padding(.horizontal)
                             .padding(.top, 8)
@@ -200,7 +202,7 @@ struct ShoppingListView: View {
 
                     TextField("Item Name", text: $itemName)
                         .padding()
-                        .background(Color.gray.opacity(0.2))
+                        .background(Color("CardColor").opacity(0.8))
                         .cornerRadius(8)
                         .onChange(of: itemName) { oldValue, newValue in
                             updateUnitBasedOnItem()
@@ -214,7 +216,7 @@ struct ShoppingListView: View {
 
                             TextField("1", text: $itemQuantity)
                                 .padding()
-                                .background(Color.gray.opacity(0.2))
+                                .background(Color("CardColor").opacity(0.8))
                                 .cornerRadius(8)
                                 .frame(maxWidth: .infinity)
                         }
@@ -226,7 +228,7 @@ struct ShoppingListView: View {
 
                             TextField("each", text: $itemUnit)
                                 .padding()
-                                .background(Color.gray.opacity(0.2))
+                                .background(Color("CardColor").opacity(0.8))
                                 .cornerRadius(8)
                                 .frame(maxWidth: .infinity)
                         }

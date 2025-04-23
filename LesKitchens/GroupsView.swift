@@ -28,9 +28,11 @@ struct GroupsView: View {
     // Empty state view for no groups
     private func emptyStateView() -> some View {
         VStack(spacing: 20) {
-            Image(systemName: "person.2")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
+            Image("Kinette")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+                .padding(.bottom, 10)
 
             Text("No groups yet")
                 .font(.headline)
@@ -59,8 +61,8 @@ struct GroupsView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Only use green background for the entire screen
-                Color(red: 0.5, green: 0.7, blue: 0.5)
+                // Use a color asset that respects dark mode
+                Color("BackgroundColor")
                     .ignoresSafeArea()
 
                 if viewModel.isLoading {

@@ -9,17 +9,16 @@ struct ProfileView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Only use green background for the entire screen
-                Color(red: 0.5, green: 0.7, blue: 0.5)
+                // Use color asset that respects dark mode
+                Color("BackgroundColor")
                     .ignoresSafeArea()
 
                 VStack(spacing: 20) {
-                    Image(systemName: "person.circle.fill")
+                    Image("Kinette")
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(Color("ActionColor"))
-                        .padding(.top, 50)
+                        .scaledToFit()
+                        .frame(width: 120, height: 120)
+                        .padding(.top, 40)
 
                     Text(authViewModel.userEmail)
                         .font(.headline)

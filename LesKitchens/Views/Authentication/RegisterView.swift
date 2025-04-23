@@ -11,91 +11,97 @@ struct RegisterView: View {
     @State private var passwordsMatch = true
 
     var body: some View {
-        VStack {
-            // Title
-            Text("Create Account")
-                .font(.largeTitle)
-                .fontWeight(.bold)
-                .padding(.top, 30)
-                .padding(.bottom, 30)
+        ZStack {
+            // Add background color that respects dark mode
+            Color("BackgroundColor")
+                .ignoresSafeArea()
 
-            // Registration Form
-            VStack(spacing: 20) {
-                TextField("Username", text: $username)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
+            VStack {
+                // Title
+                Text("Create Account")
+                    .font(.largeTitle)
+                    .fontWeight(.bold)
+                    .padding(.top, 30)
+                    .padding(.bottom, 30)
 
-                TextField("Email", text: $email)
-                    .keyboardType(.emailAddress)
-                    .autocapitalization(.none)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-
-                SecureField("Password", text: $password)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-
-                SecureField("Confirm Password", text: $confirmPassword)
-                    .padding()
-                    .background(Color(.systemGray6))
-                    .cornerRadius(8)
-                    .onChange(of: confirmPassword) { oldValue, newValue in
-                        passwordsMatch = password == newValue || newValue.isEmpty
-                    }
-
-                if !passwordsMatch {
-                    Text("Passwords do not match")
-                        .foregroundColor(.red)
-                        .font(.footnote)
-                }
-
-                // Error message
-                if let error = authViewModel.error {
-                    Text(error)
-                        .foregroundColor(.red)
-                        .font(.footnote)
-                }
-
-                // Register button
-                Button(action: {
-                    if password == confirmPassword {
-                        authViewModel.register(
-                            withEmail: email, password: password, username: username)
-                    } else {
-                        passwordsMatch = false
-                    }
-                }) {
-                    Text("Sign Up")
-                        .fontWeight(.semibold)
-                        .foregroundColor(.white)
-                        .frame(maxWidth: .infinity)
+                // Registration Form
+                VStack(spacing: 20) {
+                    TextField("Username", text: $username)
                         .padding()
-                        .background(Color.blue)
+                        .background(Color("CardColor"))
                         .cornerRadius(8)
-                }
-                .disabled(
-                    email.isEmpty || password.isEmpty || username.isEmpty || !passwordsMatch
-                        || authViewModel.isAuthenticating
-                )
-                .opacity(
-                    email.isEmpty || password.isEmpty || username.isEmpty || !passwordsMatch
-                        || authViewModel.isAuthenticating ? 0.6 : 1)
 
-                // Back to login button
-                Button(action: {
-                    dismiss()
-                }) {
-                    Text("Already have an account? Log In")
-                        .foregroundColor(.blue)
+                    TextField("Email", text: $email)
+                        .keyboardType(.emailAddress)
+                        .autocapitalization(.none)
+                        .padding()
+                        .background(Color("CardColor"))
+                        .cornerRadius(8)
+
+                    SecureField("Password", text: $password)
+                        .padding()
+                        .background(Color("CardColor"))
+                        .cornerRadius(8)
+
+                    SecureField("Confirm Password", text: $confirmPassword)
+                        .padding()
+                        .background(Color("CardColor"))
+                        .cornerRadius(8)
+                        .onChange(of: confirmPassword) { oldValue, newValue in
+                            passwordsMatch = password == newValue || newValue.isEmpty
+                        }
+
+                    if !passwordsMatch {
+                        Text("Passwords do not match")
+                            .foregroundColor(.red)
+                            .font(.footnote)
+                    }
+
+                    // Error message
+                    if let error = authViewModel.error {
+                        Text(error)
+                            .foregroundColor(.red)
+                            .font(.footnote)
+                    }
+
+                    // Register button
+                    Button(action: {
+                        if password == confirmPassword {
+                            authViewModel.register(
+                                withEmail: email, password: password, username: username)
+                        } else {
+                            passwordsMatch = false
+                        }
+                    }) {
+                        Text("Sign Up")
+                            .fontWeight(.semibold)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color("ActionColor"))
+                            .cornerRadius(8)
+                    }
+                    .disabled(
+                        email.isEmpty || password.isEmpty || username.isEmpty || !passwordsMatch
+                            || authViewModel.isAuthenticating
+                    )
+                    .opacity(
+                        email.isEmpty || password.isEmpty || username.isEmpty || !passwordsMatch
+                            || authViewModel.isAuthenticating ? 0.6 : 1)
+
+                    // Back to login button
+                    Button(action: {
+                        dismiss()
+                    }) {
+                        Text("Already have an account? Log In")
+                            .foregroundColor(Color("ActionColor"))
+                    }
+                    .padding(.top)
                 }
-                .padding(.top)
+                .padding(.horizontal)
+
+                Spacer()
             }
-            .padding(.horizontal)
-
-            Spacer()
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {

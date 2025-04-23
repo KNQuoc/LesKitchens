@@ -58,7 +58,7 @@ struct InventoryView: View {
                 }
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
-                .background(Color.white)
+                .background(Color("CardColor"))
                 .cornerRadius(8)
             }
             .alignmentGuide(.trailing) { d in d[.trailing] }
@@ -119,7 +119,7 @@ struct InventoryView: View {
             }
         }
         .padding(.vertical, 4)
-        .background(Color.white)
+        .background(Color("CardColor"))
         .cornerRadius(8)
         .shadow(color: Color.black.opacity(0.15), radius: 3, x: 0, y: 2)
         .frame(width: 220, alignment: .trailing)
@@ -150,7 +150,7 @@ struct InventoryView: View {
             }
             .padding(.vertical, 8)
             .padding(.horizontal, 12)
-            .background(isSelected ? Color("ActionColor").opacity(0.1) : Color.white)
+            .background(isSelected ? Color("ActionColor").opacity(0.1) : Color("CardColor"))
         }
         .buttonStyle(PlainButtonStyle())
     }
@@ -240,9 +240,11 @@ struct InventoryView: View {
     // Empty state view
     private func emptyStateView() -> some View {
         VStack(spacing: 20) {
-            Image(systemName: "archivebox")
-                .font(.system(size: 60))
-                .foregroundColor(.gray)
+            Image("Kinette")
+                .resizable()
+                .scaledToFit()
+                .frame(width: 120, height: 120)
+                .padding(.bottom, 10)
 
             Text("No items in inventory")
                 .font(.headline)
@@ -271,8 +273,8 @@ struct InventoryView: View {
     var body: some View {
         NavigationView {
             ZStack {
-                // Only use green background for the entire screen
-                Color(red: 0.5, green: 0.7, blue: 0.5)
+                // Use a color that respects dark mode instead of hardcoded green
+                Color("BackgroundColor")
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -296,13 +298,13 @@ struct InventoryView: View {
                         // Inventory items list
                         ScrollView {
                             VStack(spacing: 10) {
-                                // Add custom search bar with white background
+                                // Add custom search bar with background that respects dark mode
                                 HStack {
                                     Image(systemName: "magnifyingglass")
                                         .foregroundColor(.gray)
 
                                     TextField("Search", text: $searchText)
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.primary)
                                         .onChange(of: searchText) { oldValue, newValue in
                                             filterItems(searchText: newValue)
                                         }
@@ -317,7 +319,7 @@ struct InventoryView: View {
                                     }
                                 }
                                 .padding(8)
-                                .background(Color.white)
+                                .background(Color("CardColor"))
                                 .cornerRadius(10)
                                 .padding(.horizontal)
                                 .padding(.top, 8)
@@ -417,7 +419,7 @@ struct AddInventoryItemView: View {
 
                 TextField("Item Name", text: $itemName)
                     .padding()
-                    .background(Color.gray.opacity(0.2))
+                    .background(Color("CardColor").opacity(0.8))
                     .cornerRadius(8)
                     .onChange(of: itemName) { oldValue, newValue in
                         updateUnitBasedOnItem()
@@ -431,7 +433,7 @@ struct AddInventoryItemView: View {
 
                         TextField("1", text: $itemQuantity)
                             .padding()
-                            .background(Color.gray.opacity(0.2))
+                            .background(Color("CardColor").opacity(0.8))
                             .cornerRadius(8)
                             .frame(maxWidth: .infinity)
                     }
@@ -443,7 +445,7 @@ struct AddInventoryItemView: View {
 
                         TextField("each", text: $itemUnit)
                             .padding()
-                            .background(Color.gray.opacity(0.2))
+                            .background(Color("CardColor").opacity(0.8))
                             .cornerRadius(8)
                             .frame(maxWidth: .infinity)
                     }

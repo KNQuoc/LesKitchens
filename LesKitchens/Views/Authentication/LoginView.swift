@@ -10,21 +10,20 @@ struct LoginView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                // Only use green background for the entire screen
-                Color(red: 0.5, green: 0.7, blue: 0.5)
+                // Use color asset that respects dark mode
+                Color("BackgroundColor")
                     .ignoresSafeArea()
 
                 // Content
                 VStack {
                     // Logo
-                    Image(systemName: "basket.fill")
+                    Image("Kinette")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 100, height: 100)
-                        .foregroundColor(Color("ActionColor"))
+                        .frame(width: 150, height: 150)
                         .padding(.top, 50)
 
-                    Text("Kitchen Assistant")
+                    Text("Kinette")
                         .font(.largeTitle)
                         .fontWeight(.bold)
                         .padding(.bottom, 50)
