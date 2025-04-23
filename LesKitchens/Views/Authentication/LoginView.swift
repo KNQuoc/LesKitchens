@@ -20,13 +20,8 @@ struct LoginView: View {
                     Image("Kinette")
                         .resizable()
                         .scaledToFit()
-                        .frame(width: 150, height: 150)
+                        .frame(width: 250, height: 250)
                         .padding(.top, 50)
-
-                    Text("Kinette")
-                        .font(.largeTitle)
-                        .fontWeight(.bold)
-                        .padding(.bottom, 50)
 
                     // Login Form
                     VStack(spacing: 20) {
