@@ -25,5 +25,9 @@
 	<array>
 		<string>location</string>
 	</array>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>This app uses speech recognition to enable voice commands for adding items to your shopping list.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app requires microphone access to enable voice commands.</string>
 </dict>
 </plist>

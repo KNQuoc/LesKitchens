@@ -11,6 +11,9 @@
 		F44D15B42DB21B520012C6A5 /* GooglePlacesSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F44D15B32DB21B520012C6A5 /* GooglePlacesSwift */; };
 		F4A3ACF22DB4CE53007BB2CC /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F4A3ACF12DB4CE53007BB2CC /* GoogleSignIn */; };
 		F4A3ACF42DB4CE53007BB2CC /* GoogleSignInSwift in Frameworks */ = {isa = PBXBuildFile; productRef = F4A3ACF32DB4CE53007BB2CC /* GoogleSignInSwift */; };
+		F4D5FD4A2DCBFA85009AE544 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4D5FCFE2DCBF210009AE544 /* WidgetKit.framework */; };
+		F4D5FD4B2DCBFA85009AE544 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F4D5FD002DCBF210009AE544 /* SwiftUI.framework */; };
+		F4D5FD5C2DCBFA86009AE544 /* WidgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = F4D5FD492DCBFA85009AE544 /* WidgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		F4F421732DB4493E004E15AF /* FirebaseAppCheck in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421722DB4493E004E15AF /* FirebaseAppCheck */; };
 		F4F421752DB4493E004E15AF /* FirebaseAuth in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421742DB4493E004E15AF /* FirebaseAuth */; };
 		F4F421772DB4493E004E15AF /* FirebaseAuthCombine-Community in Frameworks */ = {isa = PBXBuildFile; productRef = F4F421762DB4493E004E15AF /* FirebaseAuthCombine-Community */; };
@@ -35,15 +38,48 @@
 			remoteGlobalIDString = F4BA94A72D9C7795002664B9;
 			remoteInfo = LesKitchens;
 		};
+		F4D5FD5A2DCBFA86009AE544 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = F4BA94A02D9C7795002664B9 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = F4D5FD482DCBFA85009AE544;
+			remoteInfo = WidgetExtension;
+		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		F4D5FD172DCBF211009AE544 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				F4D5FD5C2DCBFA86009AE544 /* WidgetExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		F4BA94A82D9C7795002664B9 /* LesKitchens.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = LesKitchens.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4BA94B52D9C7796002664B9 /* LesKitchensTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LesKitchensTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		F4BA94BF2D9C7796002664B9 /* LesKitchensUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LesKitchensUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		F4D5FCFE2DCBF210009AE544 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
+		F4D5FD002DCBF210009AE544 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
+		F4D5FD442DCBFA24009AE544 /* WidgetExtension copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "WidgetExtension copy-Info.plist"; path = "/Users/quocngo/Documents/GitHub/LesKitchens/WidgetExtension copy-Info.plist"; sourceTree = "<absolute>"; };
+		F4D5FD492DCBFA85009AE544 /* WidgetExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		F4D5FE162DCC0A50009AE544 /* WidgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = WidgetExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		F4D5FD602DCBFA86009AE544 /* Exceptions for "Widget" folder in "WidgetExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = F4D5FD482DCBFA85009AE544 /* WidgetExtension */;
+		};
 		F4F4216D2DB2CCD2004E15AF /* Exceptions for "LesKitchens" folder in "LesKitchens" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -70,6 +106,14 @@
 		F4BA94C22D9C7796002664B9 /* LesKitchensUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = LesKitchensUITests;
+			sourceTree = "<group>";
+		};
+		F4D5FD4C2DCBFA85009AE544 /* Widget */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				F4D5FD602DCBFA86009AE544 /* Exceptions for "Widget" folder in "WidgetExtension" target */,
+			);
+			path = Widget;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -107,15 +151,28 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F4D5FD462DCBFA85009AE544 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F4D5FD4B2DCBFA85009AE544 /* SwiftUI.framework in Frameworks */,
+				F4D5FD4A2DCBFA85009AE544 /* WidgetKit.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		F4BA949F2D9C7795002664B9 = {
 			isa = PBXGroup;
 			children = (
+				F4D5FE162DCC0A50009AE544 /* WidgetExtension.entitlements */,
 				F4BA94AA2D9C7795002664B9 /* LesKitchens */,
 				F4BA94B82D9C7796002664B9 /* LesKitchensTests */,
 				F4BA94C22D9C7796002664B9 /* LesKitchensUITests */,
+				F4D5FD4C2DCBFA85009AE544 /* Widget */,
+				F4D5FCFD2DCBF210009AE544 /* Frameworks */,
+				F4D5FD442DCBFA24009AE544 /* WidgetExtension copy-Info.plist */,
 				F4BA94A92D9C7795002664B9 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -126,8 +183,18 @@
 				F4BA94A82D9C7795002664B9 /* LesKitchens.app */,
 				F4BA94B52D9C7796002664B9 /* LesKitchensTests.xctest */,
 				F4BA94BF2D9C7796002664B9 /* LesKitchensUITests.xctest */,
+				F4D5FD492DCBFA85009AE544 /* WidgetExtension.appex */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		F4D5FCFD2DCBF210009AE544 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				F4D5FCFE2DCBF210009AE544 /* WidgetKit.framework */,
+				F4D5FD002DCBF210009AE544 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,10 +207,12 @@
 				F4BA94A42D9C7795002664B9 /* Sources */,
 				F4BA94A52D9C7795002664B9 /* Frameworks */,
 				F4BA94A62D9C7795002664B9 /* Resources */,
+				F4D5FD172DCBF211009AE544 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				F4D5FD5B2DCBFA86009AE544 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				F4BA94AA2D9C7795002664B9 /* LesKitchens */,
@@ -212,6 +281,28 @@
 			productReference = F4BA94BF2D9C7796002664B9 /* LesKitchensUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		F4D5FD482DCBFA85009AE544 /* WidgetExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = F4D5FD5D2DCBFA86009AE544 /* Build configuration list for PBXNativeTarget "WidgetExtension" */;
+			buildPhases = (
+				F4D5FD452DCBFA85009AE544 /* Sources */,
+				F4D5FD462DCBFA85009AE544 /* Frameworks */,
+				F4D5FD472DCBFA85009AE544 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				F4D5FD4C2DCBFA85009AE544 /* Widget */,
+			);
+			name = WidgetExtension;
+			packageProductDependencies = (
+			);
+			productName = WidgetExtension;
+			productReference = F4D5FD492DCBFA85009AE544 /* WidgetExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -232,6 +323,9 @@
 					F4BA94BE2D9C7796002664B9 = {
 						CreatedOnToolsVersion = 16.3;
 						TestTargetID = F4BA94A72D9C7795002664B9;
+					};
+					F4D5FD482DCBFA85009AE544 = {
+						CreatedOnToolsVersion = 16.3;
 					};
 				};
 			};
@@ -257,6 +351,7 @@
 				F4BA94A72D9C7795002664B9 /* LesKitchens */,
 				F4BA94B42D9C7796002664B9 /* LesKitchensTests */,
 				F4BA94BE2D9C7796002664B9 /* LesKitchensUITests */,
+				F4D5FD482DCBFA85009AE544 /* WidgetExtension */,
 			);
 		};
 /* End PBXProject section */
@@ -277,6 +372,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		F4BA94BD2D9C7796002664B9 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F4D5FD472DCBFA85009AE544 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -307,6 +409,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		F4D5FD452DCBFA85009AE544 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -319,6 +428,11 @@
 			isa = PBXTargetDependency;
 			target = F4BA94A72D9C7795002664B9 /* LesKitchens */;
 			targetProxy = F4BA94C02D9C7796002664B9 /* PBXContainerItemProxy */;
+		};
+		F4D5FD5B2DCBFA86009AE544 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = F4D5FD482DCBFA85009AE544 /* WidgetExtension */;
+			targetProxy = F4D5FD5A2DCBFA86009AE544 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -448,6 +562,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = LesKitchens/LesKitchens.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -486,6 +601,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = NO;
+				CODE_SIGN_ENTITLEMENTS = LesKitchens/LesKitchens.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
@@ -585,6 +701,64 @@
 			};
 			name = Release;
 		};
+		F4D5FD5E2DCBFA86009AE544 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = WidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J8RS5LMCK3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = KinetteWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchens.Widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		F4D5FD5F2DCBFA86009AE544 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = WidgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = J8RS5LMCK3;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = Widget/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = KinetteWidgetExtension;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.1;
+				PRODUCT_BUNDLE_IDENTIFIER = KitchenLabs.LesKitchens.Widget;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -620,6 +794,15 @@
 			buildConfigurations = (
 				F4BA94D02D9C7796002664B9 /* Debug */,
 				F4BA94D12D9C7796002664B9 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		F4D5FD5D2DCBFA86009AE544 /* Build configuration list for PBXNativeTarget "WidgetExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F4D5FD5E2DCBFA86009AE544 /* Debug */,
+				F4D5FD5F2DCBFA86009AE544 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

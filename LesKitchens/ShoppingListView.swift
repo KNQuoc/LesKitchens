@@ -1,6 +1,9 @@
+import AVFoundation
+import CoreLocation
 import Firebase
 import FirebaseAuth
 import Foundation
+import Speech
 import SwiftUI
 
 #if DEBUG
@@ -15,6 +18,7 @@ import SwiftUI
 struct ShoppingListView: View {
     @ObservedObject var viewModel: KitchenViewModel
     @State private var showingAddItemView = false
+    @State private var showingVoiceAssistant = false
     @State private var searchText = ""
 
     // Extract shopping item into separate view
@@ -137,7 +141,37 @@ struct ShoppingListView: View {
                     Spacer()
 
                     HStack {
+                        // Add voice assistant button
+                        Button(action: {
+                            showingVoiceAssistant = true
+                        }) {
+                            Image(systemName: "mic.circle.fill")
+                                .font(.title)
+                                .foregroundColor(.white)
+                                .frame(width: 60, height: 60)
+                                .background(Color("WaveColor"))
+                                .clipShape(Circle())
+                                .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 2)
+                        }
+                        .padding()
+
                         Spacer()
+
+                        // Debug button for widget data - only in DEBUG builds
+                        #if DEBUG
+                            Button(action: {
+                                // Save debug data for widget testing
+                                debugSaveWidgetData()
+                            }) {
+                                Image(systemName: "square.and.arrow.down.fill")
+                                    .font(.title2)
+                                    .foregroundColor(.white)
+                                    .frame(width: 40, height: 40)
+                                    .background(Color.orange)
+                                    .clipShape(Circle())
+                                    .shadow(color: Color.black.opacity(0.2), radius: 2, x: 0, y: 2)
+                            }
+                        #endif
 
                         Button(action: {
                             showingAddItemView = true
@@ -158,15 +192,41 @@ struct ShoppingListView: View {
             .sheet(isPresented: $showingAddItemView) {
                 AddShoppingItemView(viewModel: viewModel)
             }
+            .sheet(isPresented: $showingVoiceAssistant) {
+                VoiceAssistantView(viewModel: viewModel)
+            }
             .onAppear {
                 // If we have a user, load shopping items
                 if let currentUser = Auth.auth().currentUser {
                     viewModel.loadShoppingItems(userId: currentUser.uid) { _ in
                         // Items loaded
+                        // Save shopping items count to shared UserDefaults for widget access
+                        self.saveShoppingItemsToUserDefaults()
                     }
                 }
             }
         }
+    }
+
+    // Save shopping list info to shared UserDefaults for widget access
+    private func saveShoppingItemsToUserDefaults() {
+        let sharedDefaults = UserDefaults(suiteName: "group.KitchenLabs.LesKitchens")
+
+        // Save shopping item count
+        sharedDefaults?.set(viewModel.shoppingItems.count, forKey: "shopping_items_count")
+
+        // Also save the actual items so widget can display them if needed
+        let itemNames = viewModel.shoppingItems.map { $0.name }
+        sharedDefaults?.set(itemNames, forKey: "shopping_items")
+
+        // Add timestamp for when shopping list was last updated
+        sharedDefaults?.set(Date(), forKey: "shopping_list_last_updated")
+
+        sharedDefaults?.synchronize()
+
+        print(
+            "✅ Saved \(viewModel.shoppingItems.count) shopping items to shared UserDefaults for widget access"
+        )
     }
 
     private func filterItems(searchText: String) {
@@ -330,4 +390,66 @@ struct ShoppingListView: View {
             }
         }
     #endif
+
+    // Debug function to save test data for widget
+    #if DEBUG
+        private func debugSaveWidgetData() {
+            print("📲 Debug: Manually saving widget test data")
+
+            // Call the debug function in GooglePlacesService
+            let placesService = GooglePlacesService()
+            placesService.saveDebugStoreDataForWidget()
+
+            // Also save shopping items to make sure they're accessible
+            saveShoppingItemsToUserDefaults()
+        }
+    #endif
+
+    // Debug function to analyze location data
+    private func debugLocationData() {
+        print("\n🔍 DEBUG - MANUALLY CHECKING LOCATION DATA")
+
+        // Check what's in UserDefaults
+        let sharedDefaults = UserDefaults(suiteName: "group.KitchenLabs.LesKitchens")
+
+        print("CURRENT USERDEFAULTS DATA:")
+        print("-------------------------")
+        if let storeName = sharedDefaults?.string(forKey: "nearest_store_name") {
+            print("Store name: \(storeName)")
+        } else {
+            print("No store name found")
+        }
+
+        if let distance = sharedDefaults?.double(forKey: "nearest_store_distance") {
+            print("Distance: \(String(format: "%.2f", distance)) miles")
+        } else {
+            print("No distance found")
+        }
+
+        if let lastUpdated = sharedDefaults?.object(forKey: "nearest_store_last_updated") as? Date {
+            let formatter = DateFormatter()
+            formatter.dateStyle = .medium
+            formatter.timeStyle = .medium
+            print("Last updated: \(formatter.string(from: lastUpdated))")
+
+            let elapsed = Date().timeIntervalSince(lastUpdated)
+            print("Data age: \(Int(elapsed/60)) minutes ago")
+        } else {
+            print("No last updated timestamp found")
+        }
+
+        // Get location services and force an update
+        let locationManager = LocationServicesManager.shared
+        print("\nREQUESTING LOCATION UPDATE")
+        // Request a fresh location update
+        locationManager.startServices()
+        print("Location update requested - check console for results")
+
+        // Get Google Places service and force debug data save
+        let googlePlacesService = GooglePlacesService()
+        print("\nSAVING DEBUG STORE DATA")
+        googlePlacesService.saveDebugStoreDataForWidget()
+
+        print("-------------------------")
+    }
 }

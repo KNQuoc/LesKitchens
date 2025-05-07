@@ -11,10 +11,12 @@ import FirebaseAppCheck
 import FirebaseCore
 import GooglePlaces  // Add import for GooglePlaces
 import GoogleSignIn  // Add GoogleSignIn import
+import Speech
 // Explicitly import our Services collection so we can access LocationServicesManager
 // The "LesKitchens." prefix is optional depending on your module structure
 // import LesKitchens.Services
 import SwiftUI
+import WidgetKit
 
 // NOTE: These remaining linter errors require importing modules or changing app structure:
 // - 'main' attribute cannot be used in a module that contains top-level code
@@ -529,6 +531,54 @@ class AppDelegate: NSObject, UIApplicationDelegate {
   }
 }
 
+// MARK: - Widget URL Handler
+class WidgetURLHandler {
+  static let shared = WidgetURLHandler()
+
+  func handleURL(_ url: URL) -> Bool {
+    // Parse the URL
+    guard let components = URLComponents(url: url, resolvingAgainstBaseURL: true),
+      let host = components.host
+    else {
+      return false
+    }
+
+    print("Widget URL received: \(url.absoluteString)")
+
+    switch host {
+    case "toggle-view":
+      // Toggle widget view preference
+      toggleWidgetView()
+      return true
+
+    case "distance", "shoppingList", "assistantScreen":
+      // Navigate to appropriate screen in the app
+      // This would be handled by your navigation system
+      print("Should navigate to: \(host)")
+      return true
+
+    default:
+      return false
+    }
+  }
+
+  private func toggleWidgetView() {
+    let sharedDefaults = UserDefaults(suiteName: "group.KitchenLabs.LesKitchens")
+
+    // Get current preference, default to distance view if not set
+    let currentValue = sharedDefaults?.bool(forKey: "widget_show_distance_view") ?? true
+
+    // Toggle to opposite value
+    sharedDefaults?.set(!currentValue, forKey: "widget_show_distance_view")
+    sharedDefaults?.synchronize()
+
+    // Reload widgets to show the change immediately
+    WidgetCenter.shared.reloadAllTimelines()
+
+    print("Widget view preference toggled to: \(!currentValue)")
+  }
+}
+
 @main
 struct LesKitchensApp: App {
   @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
@@ -539,6 +589,11 @@ struct LesKitchensApp: App {
     // Initialize location services
     LocationPermissionDelegate.shared.requestLocationPermission()
     print("🔍 DEBUG: Location permission request initiated")
+
+    // Request speech recognition permissions early
+    #if os(iOS)
+      SFSpeechRecognizer.requestAuthorization { _ in }
+    #endif
   }
 
   var body: some Scene {
@@ -554,6 +609,9 @@ struct LesKitchensApp: App {
           } else {
             print("⚠️ Location services status not found in UserDefaults")
           }
+        }
+        .onOpenURL { url in
+          _ = WidgetURLHandler.shared.handleURL(url)
         }
     }
   }

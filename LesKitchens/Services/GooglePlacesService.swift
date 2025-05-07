@@ -270,3 +270,57 @@ class GooglePlacesService {
         task.resume()
     }
 }
+
+// MARK: - Debug helpers for widget data sharing
+extension GooglePlacesService {
+    /// Manually save mock store data to shared UserDefaults for widget testing
+    func saveDebugStoreDataForWidget() {
+        print("Saving debug grocery store data for widget testing...")
+
+        // Create mock store
+        let mockStore = GroceryStoreLocation(
+            id: "debug-store-1",
+            name: "Debug Grocery Store",
+            latitude: 37.7749,
+            longitude: -122.4194,
+            type: "supermarket"
+        )
+
+        // Add to UserDefaults
+        let sharedDefaults = UserDefaults(suiteName: "group.KitchenLabs.LesKitchens")
+
+        if sharedDefaults == nil {
+            print(
+                "⚠️ ERROR: Could not access group.KitchenLabs.LesKitchens - verify app group entitlements"
+            )
+            return
+        }
+
+        // Save store info
+        sharedDefaults?.set(mockStore.name, forKey: "nearest_store_name")
+        sharedDefaults?.set(1.2, forKey: "nearest_store_distance")  // Mock 1.2 miles
+        sharedDefaults?.set(mockStore.latitude, forKey: "nearest_store_latitude")
+        sharedDefaults?.set(mockStore.longitude, forKey: "nearest_store_longitude")
+        sharedDefaults?.set(Date(), forKey: "nearest_store_last_updated")
+
+        // Add mock shopping items
+        let mockItems = ["Milk", "Eggs", "Bread", "Apples"]
+        sharedDefaults?.set(mockItems, forKey: "shopping_items")
+        sharedDefaults?.set(mockItems.count, forKey: "shopping_items_count")
+        sharedDefaults?.set(Date(), forKey: "shopping_list_last_updated")
+
+        // Force synchronize
+        sharedDefaults?.synchronize()
+
+        // Debug: Print all keys after saving
+        print("🔍 Debug - Current UserDefaults in group.KitchenLabs.LesKitchens after saving:")
+        if let defaults = sharedDefaults {
+            for key in defaults.dictionaryRepresentation().keys {
+                let value = defaults.object(forKey: key)
+                print("  - \(key): \(String(describing: value))")
+            }
+        }
+
+        print("✅ Debug data saved to shared UserDefaults for widget testing")
+    }
+}

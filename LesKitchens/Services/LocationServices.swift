@@ -833,6 +833,9 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
             return
         }
 
+        // DEBUGGING: Add diagnostic check to verify store distances
+        debugGroceryStoreDistances(userLocation: userLocation)
+
         // Reduce notification cooldown to 5 minutes instead of 10
         let currentTime = Date()
         if currentTime.timeIntervalSince(lastProximityNotificationTime) < 300 {
@@ -860,6 +863,57 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
                 break  // Only send one notification even if multiple stores are nearby
             }
         }
+    }
+
+    // DEBUGGING FUNCTION: Analyze all store distances and verify nearest store logic
+    private func debugGroceryStoreDistances(userLocation: CLLocation) {
+        print("\n🔍 DEBUG - ANALYZING ALL GROCERY STORE DISTANCES")
+        print(
+            "Current location: \(userLocation.coordinate.latitude), \(userLocation.coordinate.longitude)"
+        )
+
+        // Sort stores by distance
+        let storesWithDistances = groceryStoreLocations.map {
+            store -> (store: LocationServicesStore, distance: CLLocationDistance) in
+            let storeLocation = CLLocation(latitude: store.latitude, longitude: store.longitude)
+            let distance = userLocation.distance(from: storeLocation)
+            return (store, distance)
+        }.sorted { $0.distance < $1.distance }
+
+        // Print all stores with distances
+        print("ALL STORES SORTED BY DISTANCE:")
+        print("-------------------------------")
+        for (index, (store, distance)) in storesWithDistances.enumerated() {
+            let distanceKm = distance / 1000.0
+            let distanceMi = distance * 0.000621371  // Convert meters to miles
+            print(
+                "\(index+1). \(store.name): \(String(format: "%.2f", distanceKm))km (\(String(format: "%.2f", distanceMi)) miles)"
+            )
+        }
+
+        // Check what's currently saved in UserDefaults
+        let sharedDefaults = UserDefaults(suiteName: "group.KitchenLabs.LesKitchens")
+        if let savedName = sharedDefaults?.string(forKey: "nearest_store_name"),
+            let savedDistance = sharedDefaults?.double(forKey: "nearest_store_distance")
+        {
+            print("\nCURRENTLY SAVED IN USERDEFAULTS:")
+            print("Store: \(savedName), Distance: \(savedDistance) miles")
+
+            // Check if saved store matches what should be closest
+            if !storesWithDistances.isEmpty {
+                let closestStore = storesWithDistances[0].store
+                let closestDistanceMi = storesWithDistances[0].distance * 0.000621371
+                if closestStore.name != savedName {
+                    print(
+                        "⚠️ MISMATCH DETECTED: Nearest store should be \(closestStore.name) at \(String(format: "%.2f", closestDistanceMi)) miles"
+                    )
+                }
+            }
+        } else {
+            print("\nNo store data currently saved in UserDefaults")
+        }
+
+        print("-------------------------------\n")
     }
 
     private func searchNearbyStores(at location: CLLocation) {
@@ -903,6 +957,9 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
                     )
                     self?.groceryStoreLocations = storesNearby
                     self?.lastNearbySearchTime = currentTime
+
+                    // Store mock data in shared UserDefaults for widget
+                    self?.saveNearestStoreToUserDefaults(store: storesNearby.first)
                 }
                 return
             }
@@ -911,6 +968,10 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
                 print("⚠️ No results returned, falling back to mock data")
                 self.groceryStoreLocations = LocationServicesStore.mockGroceryStores
                 self.lastNearbySearchTime = currentTime
+
+                // Store mock data in shared UserDefaults for widget
+                self.saveNearestStoreToUserDefaults(
+                    store: LocationServicesStore.mockGroceryStores.first)
                 return
             }
 
@@ -931,17 +992,133 @@ private class LocationManager: NSObject, CLLocationManagerDelegate {
                 }
 
                 print("✅ Successfully processed \(stores.count) grocery stores")
+
+                // IMPORTANT: Special case check for the Walmart store issue
+                // Fix problem where Walmart is getting prioritized over closer stores
+
+                // First, sort all stores by actual distance
+                if let currentLocation = self.clLocationManager.location {
+                    stores = stores.sorted { store1, store2 in
+                        let loc1 = CLLocation(
+                            latitude: store1.latitude, longitude: store1.longitude)
+                        let loc2 = CLLocation(
+                            latitude: store2.latitude, longitude: store2.longitude)
+
+                        let dist1 = currentLocation.distance(from: loc1)
+                        let dist2 = currentLocation.distance(from: loc2)
+
+                        return dist1 < dist2
+                    }
+
+                    print("🔄 Stores re-sorted by actual distance")
+
+                    // Debug log all stores with distances
+                    for (index, store) in stores.enumerated() {
+                        let storeLoc = CLLocation(
+                            latitude: store.latitude, longitude: store.longitude)
+                        let distanceKm = currentLocation.distance(from: storeLoc) / 1000.0
+                        print(
+                            "   \(index+1). \(store.name): \(String(format: "%.2f", distanceKm))km")
+                    }
+                }
+
                 self.groceryStoreLocations = stores
                 self.lastNearbySearchTime = currentTime
+
+                // Store the nearest store in shared UserDefaults for widget
+                if let nearestStore = stores.first {
+                    self.saveNearestStoreToUserDefaults(store: nearestStore)
+                }
             } else {
                 print("⚠️ No grocery stores found in this area, falling back to mock data")
                 // Fallback to mock data if no stores found
                 self.groceryStoreLocations = LocationServicesStore.mockGroceryStores
                 self.lastNearbySearchTime = currentTime
+
+                // Store mock data in shared UserDefaults for widget
+                self.saveNearestStoreToUserDefaults(
+                    store: LocationServicesStore.mockGroceryStores.first)
             }
         }
 
         placeClient.searchNearby(with: request, callback: callback)
+    }
+
+    // Save nearest store data to shared UserDefaults for widget access
+    private func saveNearestStoreToUserDefaults(store: LocationServicesStore?) {
+        guard let store = store else {
+            print("⚠️ Attempted to save nil store to UserDefaults")
+            return
+        }
+
+        // For debugging - output what's being saved
+        print("📝 Saving store to UserDefaults: \(store.name)")
+
+        // Calculate distance to store if we have current location
+        var distance: Double = 0.0
+        if let currentLocation = clLocationManager.location {
+            let storeLocation = CLLocation(latitude: store.latitude, longitude: store.longitude)
+            // Convert distance from meters to miles
+            distance = currentLocation.distance(from: storeLocation) * 0.000621371
+            print(
+                "📏 Calculated distance to \(store.name): \(String(format: "%.2f", distance)) miles")
+
+            // IMPORTANT: Re-check if this is actually the closest store by sorting all stores by distance
+            if !groceryStoreLocations.isEmpty {
+                // Sort stores by distance
+                let storesWithDistances = groceryStoreLocations.map {
+                    s -> (store: LocationServicesStore, distance: CLLocationDistance) in
+                    let sLocation = CLLocation(latitude: s.latitude, longitude: s.longitude)
+                    let dist = currentLocation.distance(from: sLocation)
+                    return (s, dist)
+                }.sorted { $0.distance < $1.distance }
+
+                // Get the actual closest store
+                if let closestStore = storesWithDistances.first?.store {
+                    let closestDistance = storesWithDistances.first!.distance * 0.000621371
+
+                    // If the store we're trying to save isn't actually the closest one,
+                    // use the closest one instead
+                    if closestStore.id != store.id {
+                        print("⚠️ Correcting nearest store: \(store.name) is not the closest")
+                        print(
+                            "✅ Using \(closestStore.name) at \(String(format: "%.2f", closestDistance)) miles instead"
+                        )
+
+                        // Save the ACTUAL closest store
+                        let sharedDefaults = UserDefaults(
+                            suiteName: "group.KitchenLabs.LesKitchens")
+                        sharedDefaults?.set(closestStore.name, forKey: "nearest_store_name")
+                        sharedDefaults?.set(closestDistance, forKey: "nearest_store_distance")
+                        sharedDefaults?.set(closestStore.latitude, forKey: "nearest_store_latitude")
+                        sharedDefaults?.set(
+                            closestStore.longitude, forKey: "nearest_store_longitude")
+                        sharedDefaults?.set(Date(), forKey: "nearest_store_last_updated")
+                        sharedDefaults?.synchronize()
+
+                        print(
+                            "✅ Saved CORRECTED nearest store data: \(closestStore.name), \(String(format: "%.2f", closestDistance)) miles"
+                        )
+                        return
+                    }
+                }
+            }
+        } else {
+            print("⚠️ No current location available to calculate distance")
+        }
+
+        // Save to shared UserDefaults for widget access
+        let sharedDefaults = UserDefaults(suiteName: "group.KitchenLabs.LesKitchens")
+        sharedDefaults?.set(store.name, forKey: "nearest_store_name")
+        sharedDefaults?.set(distance, forKey: "nearest_store_distance")
+        sharedDefaults?.set(store.latitude, forKey: "nearest_store_latitude")
+        sharedDefaults?.set(store.longitude, forKey: "nearest_store_longitude")
+        sharedDefaults?.set(Date(), forKey: "nearest_store_last_updated")
+        sharedDefaults?.synchronize()
+
+        print(
+            "✅ Saved nearest store data to shared UserDefaults: \(store.name), \(String(format: "%.2f", distance)) miles"
+        )
     }
 }
 
