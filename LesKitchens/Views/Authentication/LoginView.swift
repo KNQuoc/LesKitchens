@@ -75,6 +75,7 @@ struct LoginView: View {
 
                         // Google Sign-In button
                         GoogleSignInButton(action: {
+                            // Use a single Task for the sign-in process
                             Task {
                                 await authViewModel.signInWithGoogle()
                             }

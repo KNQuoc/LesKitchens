@@ -190,8 +190,8 @@ struct KitchensProvider: TimelineProvider {
         entries.append(entry)
 
         // Add future entries for rotation every 5 minutes
-        let minutesToSchedule = 30  // Schedule entries for 30 minutes ahead
-        let minuteInterval = 5  // 5-minute intervals
+        let minutesToSchedule = 2  // Schedule entries for 2 minutes ahead
+        let minuteInterval = 1  // 1-minute intervals
 
         for minute in stride(from: minuteInterval, through: minutesToSchedule, by: minuteInterval) {
             if let futureDate = Calendar.current.date(
@@ -212,7 +212,7 @@ struct KitchensProvider: TimelineProvider {
         }
 
         // Update every 5 minutes
-        let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 5, to: currentDate)!
+        let nextUpdateDate = Calendar.current.date(byAdding: .minute, value: 1, to: currentDate)!
         let timeline = Timeline(entries: entries, policy: .after(nextUpdateDate))
         completion(timeline)
     }

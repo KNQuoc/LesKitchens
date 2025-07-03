@@ -180,21 +180,35 @@ class AuthViewModel: ObservableObject {
                     userInfo: [NSLocalizedDescriptionKey: "Client ID not found"])
             }
 
-            let config = GIDConfiguration(clientID: clientID)
-            GIDSignIn.sharedInstance.configuration = config
+            // Configure Google Sign-In on main thread
+            await MainActor.run {
+                let config = GIDConfiguration(clientID: clientID)
+                GIDSignIn.sharedInstance.configuration = config
+            }
 
-            let scenes = await MainActor.run { UIApplication.shared.connectedScenes.first }
-            guard let windowScene = scenes as? UIWindowScene,
-                let window = windowScene.windows.first,
-                let rootViewController = window.rootViewController
-            else {
+            // Get the root view controller on main thread
+            let rootViewController = await MainActor.run {
+                let scenes = UIApplication.shared.connectedScenes.first
+                guard let windowScene = scenes as? UIWindowScene,
+                    let window = windowScene.windows.first,
+                    let rootVC = window.rootViewController
+                else {
+                    return nil as UIViewController?
+                }
+                return rootVC
+            }
+
+            guard let rootViewController = rootViewController else {
                 throw NSError(
                     domain: "", code: -1,
                     userInfo: [NSLocalizedDescriptionKey: "No root view controller found"])
             }
 
-            let result = try await GIDSignIn.sharedInstance.signIn(
-                withPresenting: rootViewController)
+            // Perform Google Sign-In on main thread
+            let result: GIDSignInResult = try await GIDSignIn.sharedInstance.signIn(
+                withPresenting: rootViewController
+            )
+
             let user = result.user
             guard let idToken = user.idToken?.tokenString else {
                 throw NSError(
